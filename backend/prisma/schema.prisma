@@ -1,0 +1,152 @@
+// GoldSky MessageCore Database Schema
+// 基于 Feathers.js 扩展的多租户消息系统
+// 开发者协作版本
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 多租户系统 ====================
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  subdomain String   @unique
+  apiKey    String   @unique @map("api_key")
+  planType  String   @default("basic") @map("plan_type")
+  settings  Json     @default("{}")
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  users     User[]
+  messages  Message[]
+  conversations Conversation[]
+  webhooks  Webhook[]
+
+  @@map("tenants")
+}
+
+// ==================== 用户系统 ====================
+
+model User {
+  id             String  @id @default(uuid())
+  tenantId       String  @map("tenant_id")
+  externalUserId String  @map("external_user_id")
+  email          String?
+  displayName    String  @map("display_name")
+  avatarUrl      String? @map("avatar_url")
+  isActive       Boolean @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages       Message[]
+  conversations  ConversationParticipant[]
+
+  @@unique([tenantId, externalUserId])
+  @@index([tenantId, email])
+  @@map("users")
+}
+
+// ==================== 对话系统 ====================
+
+model Conversation {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String?
+  type        String   @default("direct") // direct, group, channel
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  participants ConversationParticipant[]
+
+  @@index([tenantId, type, createdAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String @id @default(uuid())
+  conversationId String @map("conversation_id")
+  userId         String @map("user_id")
+  role           String @default("member") // owner, admin, member
+  joinedAt       DateTime @default(now()) @map("joined_at")
+
+  // 关联关系
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+// ==================== 消息系统 ====================
+
+model Message {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  conversationId String   @map("conversation_id")
+  senderId       String   @map("sender_id")
+  messageType    String   @map("message_type") // text, image, file, system
+  content        Json
+  replyToId      String?  @map("reply_to_id")
+  status         String   @default("sent") // sent, delivered, read, failed
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo        Message?  @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        Message[] @relation("MessageReplies")
+
+  @@index([tenantId, conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@map("messages")
+}
+
+// ==================== Webhook 系统 ====================
+
+model Webhook {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  url         String
+  events      String[] // message.created, user.joined, etc.
+  secret      String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, isActive])
+  @@map("webhooks")
+}
+
+// ==================== 系统配置 ====================
+
+model SystemConfig {
+  id    String @id @default(uuid())
+  key   String @unique
+  value Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}

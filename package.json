@@ -1,0 +1,54 @@
+{
+  "name": "msgnexus",
+  "version": "1.0.0",
+  "description": "专业的消息管理平台 - 企业级多租户通信解决方案",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:realtime\" \"npm run dev:admin\"",
+    "build": "npm run build:api && npm run build:realtime && npm run build:admin",
+    "start": "concurrently \"npm run start:api\" \"npm run start:realtime\" \"npm run start:admin\"",
+    "test": "npm run test:api && npm run test:realtime && npm run test:admin",
+    "clean": "npm run clean:api && npm run clean:realtime && npm run clean:admin",
+    "setup": "npm install && npm run build",
+    "dev:api": "cd apps/api && npm run dev",
+    "dev:realtime": "cd apps/realtime && npm run dev", 
+    "dev:admin": "cd apps/admin && npm start",
+    "build:api": "cd apps/api && npm run build",
+    "build:realtime": "cd apps/realtime && npm run build",
+    "build:admin": "cd apps/admin && npm run build",
+    "start:api": "cd apps/api && npm start",
+    "start:realtime": "cd apps/realtime && npm start",
+    "start:admin": "cd apps/admin && npm start",
+    "test:api": "cd apps/api && npm test",
+    "test:realtime": "cd apps/realtime && npm test",
+    "test:admin": "cd apps/admin && npm test",
+    "clean:api": "cd apps/api && npm run clean",
+    "clean:realtime": "cd apps/realtime && npm run clean",
+    "clean:admin": "cd apps/admin && npm run clean"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "msg",
+    "nexus",
+    "message",
+    "communication",
+    "platform",
+    "enterprise",
+    "multi-tenant",
+    "real-time",
+    "management"
+  ],
+  "author": "MsgNexus Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/msgnexus/platform.git"
+  },
+  "homepage": "https://msgnexus.com"
+}
