@@ -1,7 +1,7 @@
 {
-  "name": "messagecore-realtime",
+  "name": "msgnexus-realtime",
   "version": "1.0.0",
-  "description": "GoldSky MessageCore Real-time Communication Service",
+  "description": "MsgNexus Real-time Communication Service",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
