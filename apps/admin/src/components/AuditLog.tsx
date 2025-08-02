@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-interface AuditEvent {
+interface AuditEntry {
   id: string;
-  timestamp: Date;
+  timestamp: string;
   userId: string;
   username: string;
   action: string;
@@ -13,235 +13,141 @@ interface AuditEvent {
   userAgent: string;
   status: 'success' | 'failure' | 'warning';
   severity: 'low' | 'medium' | 'high' | 'critical';
-  category: 'user' | 'system' | 'security' | 'data' | 'admin';
-  sessionId: string;
-  duration?: number;
-  errorMessage?: string;
 }
 
 const AuditLog: React.FC = () => {
-  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
-  const [filter, setFilter] = useState({
-    category: 'all',
-    severity: 'all',
-    status: 'all',
-    search: '',
-    startDate: '',
-    endDate: '',
-    userId: ''
-  });
-  const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
-  const [showExportDialog, setShowExportDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 模拟审计日志数据
-  useEffect(() => {
-    const mockEvents: AuditEvent[] = [
-      {
-        id: 'audit-1',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5),
-        userId: 'user-1',
-        username: 'admin',
-        action: 'LOGIN',
-        resource: 'auth',
-        details: '用户登录成功',
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        status: 'success',
-        severity: 'low',
-        category: 'security',
-        sessionId: 'session-123'
-      },
-      {
-        id: 'audit-2',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15),
-        userId: 'user-2',
-        username: 'tenant1_admin',
-        action: 'CREATE',
-        resource: 'user',
-        resourceId: 'user-15',
-        details: '创建新用户: john.doe@example.com',
-        ipAddress: '192.168.1.101',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        status: 'success',
-        severity: 'medium',
-        category: 'user',
-        sessionId: 'session-124'
-      },
-      {
-        id: 'audit-3',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30),
-        userId: 'user-3',
-        username: 'user_manager',
-        action: 'UPDATE',
-        resource: 'role',
-        resourceId: 'role-3',
-        details: '更新角色权限: 用户管理员',
-        ipAddress: '192.168.1.102',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        status: 'success',
-        severity: 'medium',
-        category: 'admin',
-        sessionId: 'session-125'
-      },
-      {
-        id: 'audit-4',
-        timestamp: new Date(Date.now() - 1000 * 60 * 45),
-        userId: 'unknown',
-        username: 'unknown',
-        action: 'LOGIN',
-        resource: 'auth',
-        details: '登录失败: 无效的用户名或密码',
-        ipAddress: '203.0.113.1',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        status: 'failure',
-        severity: 'high',
-        category: 'security',
-        sessionId: 'session-126',
-        errorMessage: 'Invalid credentials'
-      },
-      {
-        id: 'audit-5',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60),
-        userId: 'system',
-        username: 'system',
-        action: 'BACKUP',
-        resource: 'backup',
-        details: '系统自动备份完成',
-        ipAddress: '127.0.0.1',
-        userAgent: 'System/BackupService',
-        status: 'success',
-        severity: 'low',
-        category: 'system',
-        sessionId: 'system-session',
-        duration: 180
-      },
-      {
-        id: 'audit-6',
-        timestamp: new Date(Date.now() - 1000 * 60 * 90),
-        userId: 'user-1',
-        username: 'admin',
-        action: 'DELETE',
-        resource: 'user',
-        resourceId: 'user-10',
-        details: '删除用户: old.user@example.com',
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        status: 'success',
-        severity: 'high',
-        category: 'user',
-        sessionId: 'session-123'
-      },
-      {
-        id: 'audit-7',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120),
-        userId: 'user-4',
-        username: 'viewer1',
-        action: 'ACCESS',
-        resource: 'sensitive_data',
-        details: '访问敏感数据: 用户列表',
-        ipAddress: '192.168.1.103',
-        userAgent: 'Mozilla/5.0 (Linux; x86_64)',
-        status: 'success',
-        severity: 'medium',
-        category: 'data',
-        sessionId: 'session-127'
-      },
-      {
-        id: 'audit-8',
-        timestamp: new Date(Date.now() - 1000 * 60 * 150),
-        userId: 'unknown',
-        username: 'unknown',
-        action: 'BRUTE_FORCE',
-        resource: 'auth',
-        details: '检测到暴力破解尝试',
-        ipAddress: '203.0.113.2',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        status: 'failure',
-        severity: 'critical',
-        category: 'security',
-        sessionId: 'session-128',
-        errorMessage: 'Multiple failed login attempts'
-      }
-    ];
-
-    setAuditEvents(mockEvents);
-  }, []);
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'low': return '#10b981';
-      case 'medium': return '#f59e0b';
-      case 'high': return '#ef4444';
-      case 'critical': return '#dc2626';
-      default: return '#6b7280';
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([
+    {
+      id: '1',
+      timestamp: '2024-01-01T10:00:00Z',
+      userId: '1',
+      username: 'admin',
+      action: 'LOGIN',
+      resource: 'auth',
+      details: '用户登录成功',
+      ipAddress: '192.168.1.100',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      status: 'success',
+      severity: 'low'
+    },
+    {
+      id: '2',
+      timestamp: '2024-01-01T10:05:00Z',
+      userId: '1',
+      username: 'admin',
+      action: 'CREATE_USER',
+      resource: 'user',
+      resourceId: '5',
+      details: '创建新用户: user5@msgnexus.com',
+      ipAddress: '192.168.1.100',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      status: 'success',
+      severity: 'medium'
+    },
+    {
+      id: '3',
+      timestamp: '2024-01-01T10:10:00Z',
+      userId: '2',
+      username: 'manager',
+      action: 'UPDATE_PERMISSIONS',
+      resource: 'role',
+      resourceId: '3',
+      details: '更新角色权限: 普通用户',
+      ipAddress: '192.168.1.101',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      status: 'success',
+      severity: 'medium'
+    },
+    {
+      id: '4',
+      timestamp: '2024-01-01T10:15:00Z',
+      userId: '3',
+      username: 'user1',
+      action: 'LOGIN_FAILED',
+      resource: 'auth',
+      details: '登录失败: 密码错误',
+      ipAddress: '192.168.1.102',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15',
+      status: 'failure',
+      severity: 'medium'
+    },
+    {
+      id: '5',
+      timestamp: '2024-01-01T10:20:00Z',
+      userId: '1',
+      username: 'admin',
+      action: 'DELETE_USER',
+      resource: 'user',
+      resourceId: '4',
+      details: '删除用户: user4@msgnexus.com',
+      ipAddress: '192.168.1.100',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      status: 'success',
+      severity: 'high'
+    },
+    {
+      id: '6',
+      timestamp: '2024-01-01T10:25:00Z',
+      userId: '1',
+      username: 'admin',
+      action: 'SYSTEM_CONFIG_CHANGE',
+      resource: 'system',
+      details: '修改系统配置: 数据库连接池大小',
+      ipAddress: '192.168.1.100',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      status: 'success',
+      severity: 'high'
     }
-  };
+  ]);
+
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterSeverity, setFilterSeverity] = useState<string>('all');
+  const [filterAction, setFilterSeverity] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedLog, setSelectedLog] = useState<AuditEntry | null>(null);
+
+  const filteredLogs = auditLogs.filter(log => {
+    const statusMatch = filterStatus === 'all' || log.status === filterStatus;
+    const severityMatch = filterSeverity === 'all' || log.severity === filterSeverity;
+    const actionMatch = filterAction === 'all' || log.action === filterAction;
+    const searchMatch = log.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       log.ipAddress.includes(searchTerm);
+
+    return statusMatch && severityMatch && actionMatch && searchMatch;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success': return '#10b981';
-      case 'failure': return '#ef4444';
-      case 'warning': return '#f59e0b';
-      default: return '#6b7280';
+      case 'success': return 'text-green-600 bg-green-100';
+      case 'failure': return 'text-red-600 bg-red-100';
+      case 'warning': return 'text-yellow-600 bg-yellow-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'user': return '👤';
-      case 'system': return '⚙️';
-      case 'security': return '🔒';
-      case 'data': return '📊';
-      case 'admin': return '👨‍💼';
-      default: return '📝';
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'text-red-600 bg-red-100';
+      case 'high': return 'text-orange-600 bg-orange-100';
+      case 'medium': return 'text-yellow-600 bg-yellow-100';
+      case 'low': return 'text-green-600 bg-green-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case 'LOGIN': return '🔑';
-      case 'LOGOUT': return '🚪';
-      case 'CREATE': return '➕';
-      case 'UPDATE': return '✏️';
-      case 'DELETE': return '🗑️';
-      case 'ACCESS': return '👁️';
-      case 'BACKUP': return '💾';
-      case 'BRUTE_FORCE': return '⚠️';
-      default: return '📝';
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
   };
-
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'N/A';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
-
-  const filteredEvents = auditEvents.filter(event => {
-    const matchesCategory = filter.category === 'all' || event.category === filter.category;
-    const matchesSeverity = filter.severity === 'all' || event.severity === filter.severity;
-    const matchesStatus = filter.status === 'all' || event.status === filter.status;
-    const matchesSearch = !filter.search || 
-      event.username.toLowerCase().includes(filter.search.toLowerCase()) ||
-      event.action.toLowerCase().includes(filter.search.toLowerCase()) ||
-      event.details.toLowerCase().includes(filter.search.toLowerCase());
-    const matchesDate = (!filter.startDate || event.timestamp >= new Date(filter.startDate)) &&
-                       (!filter.endDate || event.timestamp <= new Date(filter.endDate));
-    const matchesUserId = !filter.userId || event.userId === filter.userId;
-    
-    return matchesCategory && matchesSeverity && matchesStatus && matchesSearch && matchesDate && matchesUserId;
-  });
 
   const exportAuditLog = () => {
     const csvContent = [
-      '时间,用户,操作,资源,详情,IP地址,状态,严重程度,类别',
-      ...filteredEvents.map(event => 
-        `${event.timestamp.toISOString()},${event.username},${event.action},${event.resource},"${event.details}",${event.ipAddress},${event.status},${event.severity},${event.category}`
+      'Timestamp,User,Action,Resource,Details,IP Address,Status,Severity',
+      ...filteredLogs.map(log => 
+        `"${log.timestamp}","${log.username}","${log.action}","${log.resource}","${log.details}","${log.ipAddress}","${log.status}","${log.severity}"`
       )
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -249,597 +155,269 @@ const AuditLog: React.FC = () => {
     a.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    setShowExportDialog(false);
   };
 
-  const clearAuditLog = () => {
-    if (window.confirm('确定要清空审计日志吗？此操作不可恢复。')) {
-      setAuditEvents([]);
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case 'LOGIN': return '🔐';
+      case 'LOGIN_FAILED': return '❌';
+      case 'CREATE_USER': return '➕';
+      case 'UPDATE_USER': return '✏️';
+      case 'DELETE_USER': return '🗑️';
+      case 'UPDATE_PERMISSIONS': return '🔑';
+      case 'SYSTEM_CONFIG_CHANGE': return '⚙️';
+      case 'DATA_EXPORT': return '📤';
+      case 'DATA_IMPORT': return '📥';
+      default: return '📝';
     }
   };
 
   return (
-    <div style={{ padding: '32px' }}>
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ 
-          fontSize: '36px', 
-          fontWeight: 800, 
-          color: '#0f172a', 
-          margin: 0, 
-          marginBottom: '12px',
-          background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
-        }}>
-          📋 审计日志
-        </h1>
-        <p style={{ 
-          fontSize: '18px', 
-          color: '#64748b', 
-          margin: 0,
-          fontWeight: 500
-        }}>
-          记录和监控系统操作，确保安全性和合规性
-        </p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">审计日志</h1>
+        <p className="text-gray-600">监控和记录系统操作</p>
       </div>
 
       {/* 统计信息 */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '16px', 
-        marginBottom: '24px' 
-      }}>
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          border: '1px solid #e2e8f0'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: '#3b82f6',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '20px'
-            }}>
-              📊
-            </div>
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>
-                {auditEvents.length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>总事件数</div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-sm font-medium text-gray-500">总日志数</div>
+          <div className="text-2xl font-bold text-gray-900">{auditLogs.length}</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-sm font-medium text-gray-500">成功操作</div>
+          <div className="text-2xl font-bold text-green-600">
+            {auditLogs.filter(log => log.status === 'success').length}
           </div>
         </div>
-
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          border: '1px solid #e2e8f0'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: '#ef4444',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '20px'
-            }}>
-              ⚠️
-            </div>
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>
-                {auditEvents.filter(e => e.severity === 'high' || e.severity === 'critical').length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>高风险事件</div>
-            </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-sm font-medium text-gray-500">失败操作</div>
+          <div className="text-2xl font-bold text-red-600">
+            {auditLogs.filter(log => log.status === 'failure').length}
           </div>
         </div>
-
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          border: '1px solid #e2e8f0'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: '#10b981',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '20px'
-            }}>
-              ✅
-            </div>
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>
-                {auditEvents.filter(e => e.status === 'success').length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>成功操作</div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          border: '1px solid #e2e8f0'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: '#f59e0b',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '20px'
-            }}>
-              👥
-            </div>
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>
-                {Array.from(new Set(auditEvents.map(e => e.userId))).length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>活跃用户</div>
-            </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-sm font-medium text-gray-500">高风险操作</div>
+          <div className="text-2xl font-bold text-orange-600">
+            {auditLogs.filter(log => log.severity === 'high' || log.severity === 'critical').length}
           </div>
         </div>
       </div>
 
-      {/* 筛选和操作 */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '16px', 
-        padding: '24px', 
-        marginBottom: '24px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        border: '1px solid #e2e8f0'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: 0 }}>
-            筛选和操作
-          </h3>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={() => setShowExportDialog(true)}
-              style={{
-                padding: '8px 16px',
-                background: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              📥 导出日志
-            </button>
-            <button
-              onClick={clearAuditLog}
-              style={{
-                padding: '8px 16px',
-                background: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              🗑️ 清空日志
-            </button>
-          </div>
-        </div>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px', display: 'block' }}>
-              类别
-            </label>
-            <select
-              value={filter.category}
-              onChange={(e) => setFilter(prev => ({ ...prev, category: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            >
-              <option value="all">所有类别</option>
-              <option value="user">用户操作</option>
-              <option value="system">系统事件</option>
-              <option value="security">安全事件</option>
-              <option value="data">数据访问</option>
-              <option value="admin">管理操作</option>
-            </select>
-          </div>
-          
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px', display: 'block' }}>
-              严重程度
-            </label>
-            <select
-              value={filter.severity}
-              onChange={(e) => setFilter(prev => ({ ...prev, severity: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            >
-              <option value="all">所有级别</option>
-              <option value="low">低</option>
-              <option value="medium">中</option>
-              <option value="high">高</option>
-              <option value="critical">严重</option>
-            </select>
-          </div>
-          
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px', display: 'block' }}>
-              状态
-            </label>
-            <select
-              value={filter.status}
-              onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            >
-              <option value="all">所有状态</option>
-              <option value="success">成功</option>
-              <option value="failure">失败</option>
-              <option value="warning">警告</option>
-            </select>
-          </div>
-          
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px', display: 'block' }}>
-              搜索
-            </label>
-            <input
-              type="text"
-              placeholder="搜索用户、操作或详情..."
-              value={filter.search}
-              onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            />
-          </div>
-        </div>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px', display: 'block' }}>
-              开始日期
-            </label>
-            <input
-              type="datetime-local"
-              value={filter.startDate}
-              onChange={(e) => setFilter(prev => ({ ...prev, startDate: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px', display: 'block' }}>
-              结束日期
-            </label>
-            <input
-              type="datetime-local"
-              value={filter.endDate}
-              onChange={(e) => setFilter(prev => ({ ...prev, endDate: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 审计日志列表 */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '16px', 
-        padding: '24px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        border: '1px solid #e2e8f0'
-      }}>
-        <h3 style={{ 
-          fontSize: '20px', 
-          fontWeight: 600, 
-          color: '#0f172a', 
-          margin: 0, 
-          marginBottom: '24px' 
-        }}>
-          审计事件 ({filteredEvents.length})
-        </h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {filteredEvents.map(event => (
-            <div
-              key={event.id}
-              style={{
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '20px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                background: selectedEvent?.id === event.id ? '#f8fafc' : 'white'
-              }}
-              onClick={() => setSelectedEvent(selectedEvent?.id === event.id ? null : event)}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ fontSize: '24px' }}>{getCategoryIcon(event.category)}</div>
-                  <div>
-                    <h4 style={{ 
-                      fontSize: '18px', 
-                      fontWeight: 600, 
-                      color: '#0f172a', 
-                      margin: 0, 
-                      marginBottom: '4px' 
-                    }}>
-                      {event.username} ({event.action})
-                    </h4>
-                    <p style={{ 
-                      fontSize: '14px', 
-                      color: '#64748b', 
-                      margin: 0 
-                    }}>
-                      {event.details}
-                    </p>
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{
-                    padding: '4px 8px',
-                    background: `${getStatusColor(event.status)}10`,
-                    color: getStatusColor(event.status),
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 600
-                  }}>
-                    {event.status === 'success' ? '✅ 成功' : 
-                     event.status === 'failure' ? '❌ 失败' : '⚠️ 警告'}
-                  </span>
-                  <span style={{
-                    padding: '4px 8px',
-                    background: `${getSeverityColor(event.severity)}10`,
-                    color: getSeverityColor(event.severity),
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 600
-                  }}>
-                    {event.severity === 'low' ? '低' :
-                     event.severity === 'medium' ? '中' :
-                     event.severity === 'high' ? '高' : '严重'}
-                  </span>
-                </div>
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>时间</span>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>
-                    {event.timestamp.toLocaleString()}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>IP地址</span>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>
-                    {event.ipAddress}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>资源</span>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>
-                    {event.resource} {event.resourceId && `(${event.resourceId})`}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>类别</span>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>
-                    {event.category === 'user' ? '用户操作' :
-                     event.category === 'system' ? '系统事件' :
-                     event.category === 'security' ? '安全事件' :
-                     event.category === 'data' ? '数据访问' :
-                     event.category === 'admin' ? '管理操作' : event.category}
-                  </div>
-                </div>
-              </div>
-              
-              {selectedEvent?.id === event.id && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  background: 'white',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-                    <div>
-                      <h5 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
-                        详细信息
-                      </h5>
-                      <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                        <div><strong>用户代理:</strong> {event.userAgent}</div>
-                        <div><strong>会话ID:</strong> {event.sessionId}</div>
-                        {event.duration && (
-                          <div><strong>执行时间:</strong> {formatDuration(event.duration)}</div>
-                        )}
-                        {event.errorMessage && (
-                          <div><strong>错误信息:</strong> {event.errorMessage}</div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h5 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
-                        操作详情
-                      </h5>
-                      <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-                        <div><strong>操作:</strong> {event.action}</div>
-                        <div><strong>资源:</strong> {event.resource}</div>
-                        {event.resourceId && (
-                          <div><strong>资源ID:</strong> {event.resourceId}</div>
-                        )}
-                        <div><strong>详情:</strong> {event.details}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        
-        {filteredEvents.length === 0 && (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '60px 20px',
-            color: '#64748b'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
-            <h3 style={{ fontSize: '20px', fontWeight: 600, margin: 0, marginBottom: '8px' }}>
-              暂无审计事件
-            </h3>
-            <p style={{ fontSize: '14px', margin: 0 }}>
-              当前筛选条件下没有找到审计事件
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* 导出对话框 */}
-      {showExportDialog && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📥</div>
-            <h3 style={{ 
-              fontSize: '20px', 
-              fontWeight: 600, 
-              color: '#0f172a', 
-              margin: 0, 
-              marginBottom: '16px' 
-            }}>
-              导出审计日志
-            </h3>
-            <p style={{ 
-              fontSize: '16px', 
-              color: '#64748b', 
-              margin: 0, 
-              marginBottom: '24px' 
-            }}>
-              将导出 {filteredEvents.length} 条审计事件记录为 CSV 文件
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                onClick={() => setShowExportDialog(false)}
-                style={{
-                  padding: '12px 24px',
-                  background: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+      {/* 过滤和搜索 */}
+      <div className="bg-white rounded-lg shadow mb-6">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
               >
-                取消
-              </button>
+                <option value="all">全部</option>
+                <option value="success">成功</option>
+                <option value="failure">失败</option>
+                <option value="warning">警告</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">严重程度</label>
+              <select
+                value={filterSeverity}
+                onChange={(e) => setFilterSeverity(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">全部</option>
+                <option value="critical">严重</option>
+                <option value="high">高</option>
+                <option value="medium">中</option>
+                <option value="low">低</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">操作类型</label>
+              <select
+                value={filterAction}
+                onChange={(e) => setFilterAction(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">全部</option>
+                <option value="LOGIN">登录</option>
+                <option value="CREATE_USER">创建用户</option>
+                <option value="UPDATE_USER">更新用户</option>
+                <option value="DELETE_USER">删除用户</option>
+                <option value="UPDATE_PERMISSIONS">更新权限</option>
+                <option value="SYSTEM_CONFIG_CHANGE">系统配置</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">搜索</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="搜索用户、详情或IP..."
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-64"
+              />
+            </div>
+
+            <div className="flex items-end">
               <button
                 onClick={exportAuditLog}
-                style={{
-                  padding: '12px 24px',
-                  background: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
               >
-                确认导出
+                导出日志
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 日志列表 */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">审计记录 ({filteredLogs.length})</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">用户</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">资源</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">详情</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP地址</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">严重程度</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {formatDate(log.timestamp)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{log.username}</div>
+                    <div className="text-sm text-gray-500">ID: {log.userId}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <span className="text-lg mr-2">{getActionIcon(log.action)}</span>
+                      <span className="text-sm font-medium text-gray-900">{log.action}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {log.resource}
+                    {log.resourceId && (
+                      <div className="text-xs text-gray-500">ID: {log.resourceId}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                    {log.details}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {log.ipAddress}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status)}`}>
+                      {log.status === 'success' ? '成功' : 
+                       log.status === 'failure' ? '失败' : '警告'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSeverityColor(log.severity)}`}>
+                      {log.severity === 'critical' ? '严重' :
+                       log.severity === 'high' ? '高' :
+                       log.severity === 'medium' ? '中' : '低'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => setSelectedLog(log)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      查看详情
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 详情模态框 */}
+      {selectedLog && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">审计日志详情</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">时间</label>
+                  <div className="mt-1 text-sm text-gray-900">{formatDate(selectedLog.timestamp)}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">用户</label>
+                  <div className="mt-1 text-sm text-gray-900">{selectedLog.username} (ID: {selectedLog.userId})</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">操作</label>
+                  <div className="mt-1 text-sm text-gray-900">{selectedLog.action}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">资源</label>
+                  <div className="mt-1 text-sm text-gray-900">
+                    {selectedLog.resource}
+                    {selectedLog.resourceId && ` (ID: ${selectedLog.resourceId})`}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">详情</label>
+                  <div className="mt-1 text-sm text-gray-900">{selectedLog.details}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">IP地址</label>
+                  <div className="mt-1 text-sm text-gray-900">{selectedLog.ipAddress}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">用户代理</label>
+                  <div className="mt-1 text-sm text-gray-900 break-all">{selectedLog.userAgent}</div>
+                </div>
+                <div className="flex space-x-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">状态</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedLog.status)}`}>
+                      {selectedLog.status === 'success' ? '成功' : 
+                       selectedLog.status === 'failure' ? '失败' : '警告'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">严重程度</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSeverityColor(selectedLog.severity)}`}>
+                      {selectedLog.severity === 'critical' ? '严重' :
+                       selectedLog.severity === 'high' ? '高' :
+                       selectedLog.severity === 'medium' ? '中' : '低'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setSelectedLog(null)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  关闭
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import UserPermissionManager from './components/UserPermissionManager';
 import SystemDiagnostics from './components/SystemDiagnostics';
 import AuditLog from './components/AuditLog';
 import ChatRoom from './components/ChatRoom';
+import AIAssistant from './components/AIAssistant';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -27,6 +28,8 @@ function App() {
         return <div style={{ padding: '20px', fontSize: '24px', textAlign: 'center' }}>📈 系统监控页面</div>;
       case 'chat':
         return <ChatRoom />;
+      case 'ai-assistant':
+        return <AIAssistant />;
       case 'settings':
         return <SystemSettings />;
       case 'notifications':
@@ -61,6 +64,7 @@ function App() {
         { key: 'message', label: '消息监控', icon: '💬' },
         { key: 'monitor', label: '系统监控', icon: '📈' },
         { key: 'chat', label: '实时聊天', icon: '💭' },
+        { key: 'ai-assistant', label: 'AI 助手', icon: '🤖' },
         { key: 'permissions', label: '权限管理', icon: '🔐' },
       ],
     },
