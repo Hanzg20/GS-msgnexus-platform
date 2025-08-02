@@ -11,6 +11,8 @@ import SystemDiagnostics from './components/SystemDiagnostics';
 import AuditLog from './components/AuditLog';
 import ChatRoom from './components/ChatRoom';
 import AIAssistant from './components/AIAssistant';
+import PerformanceMonitor from './components/PerformanceMonitor';
+import SecurityMonitor from './components/SecurityMonitor';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -30,6 +32,12 @@ function App() {
         return <ChatRoom />;
       case 'ai-assistant':
         return <AIAssistant />;
+      case 'permissions':
+        return <UserPermissionManager />;
+      case 'performance':
+        return <PerformanceMonitor />;
+      case 'security':
+        return <SecurityMonitor />;
       case 'settings':
         return <SystemSettings />;
       case 'notifications':
@@ -42,8 +50,6 @@ function App() {
         return <LogManager />;
       case 'backup':
         return <BackupManager />;
-      case 'permissions':
-        return <UserPermissionManager />;
       case 'diagnostics':
         return <SystemDiagnostics />;
       case 'audit':
@@ -73,6 +79,8 @@ function App() {
       label: '系统管理',
       icon: '⚙️',
       children: [
+        { key: 'performance', label: '性能监控', icon: '📊' },
+        { key: 'security', label: '安全监控', icon: '🛡️' },
         { key: 'process', label: '进程管理', icon: '⚙️' },
         { key: 'logs', label: '日志管理', icon: '📋' },
         { key: 'backup', label: '备份恢复', icon: '💾' },
@@ -110,7 +118,7 @@ function App() {
       border: 'none',
       textAlign: 'left',
       fontSize: '16px',
-      position: 'relative',
+      position: 'relative' as const,
     };
 
     const hoverStyle = {

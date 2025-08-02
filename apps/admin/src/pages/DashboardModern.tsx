@@ -124,8 +124,12 @@ const DashboardModern: React.FC = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
-            <Button variant="ghost" icon={<Bell className="w-5 h-5" />}></Button>
-            <Button variant="ghost" icon={<Settings className="w-5 h-5" />}></Button>
+            <Button variant="ghost">
+              <Bell className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost">
+              <Settings className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </div>
