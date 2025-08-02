@@ -75,7 +75,11 @@ const ChatRoom: React.FC = () => {
 
   const handleTypingIndicator = (typing: any) => {
     if (typing.isTyping) {
-      setTypingUsers(prev => Array.from(new Set([...prev, typing.userId])));
+      setTypingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.add(typing.userId);
+        return Array.from(newSet);
+      });
     } else {
       setTypingUsers(prev => prev.filter(id => id !== typing.userId));
     }

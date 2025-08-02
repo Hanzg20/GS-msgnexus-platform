@@ -119,7 +119,7 @@ function App() {
       textAlign: 'left' as const,
       fontSize: '16px',
       position: 'relative' as const,
-    };
+    } as React.CSSProperties;
 
     const hoverStyle = {
       backgroundColor: 'rgba(255,255,255,0.05)',
