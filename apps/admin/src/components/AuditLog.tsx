@@ -102,7 +102,7 @@ const AuditLog: React.FC = () => {
 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
-  const [filterAction, setFilterSeverity] = useState<string>('all');
+  const [filterAction, setFilterAction] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<AuditEntry | null>(null);
 
