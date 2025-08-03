@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { Column } from '@ant-design/charts';
-import { apiClient } from '../../services/api';
+import apiClient from '../../services/api';
 
 const { Option } = Select;
 
@@ -82,7 +82,7 @@ const TenantManagement: React.FC = () => {
           total: response.data.pagination.total
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('获取租户列表失败');
       console.error('获取租户列表错误:', error);
     } finally {
@@ -114,7 +114,7 @@ const TenantManagement: React.FC = () => {
           fetchTenants(pagination.current, pagination.pageSize);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
       } else {
@@ -132,7 +132,7 @@ const TenantManagement: React.FC = () => {
         message.success('租户删除成功');
         fetchTenants(pagination.current, pagination.pageSize);
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('删除租户失败');
       console.error('删除租户错误:', error);
     }
@@ -146,7 +146,7 @@ const TenantManagement: React.FC = () => {
         message.success('状态更新成功');
         fetchTenants(pagination.current, pagination.pageSize);
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('状态更新失败');
       console.error('状态更新错误:', error);
     }
@@ -178,7 +178,7 @@ const TenantManagement: React.FC = () => {
           )
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('获取租户详情失败');
       console.error('获取租户详情错误:', error);
     }
@@ -287,7 +287,7 @@ const TenantManagement: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
-      render: (_, record: Tenant) => (
+      render: (_: any, record: Tenant) => (
         <Space size="small">
           <Tooltip title="查看详情">
             <Button type="text" onClick={() => handleViewDetails(record)}>
