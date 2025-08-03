@@ -168,7 +168,9 @@ const MessageMonitor: React.FC = () => {
       render: (_: any, record: Message) => (
         <Space size="middle">
           <Tooltip title="查看详情">
-            <Button type="text" icon={<EyeOutlined />} />
+            <Button type="text">
+              <EyeOutlined />
+            </Button>
           </Tooltip>
           <Tooltip title="AI 分析">
             <Button 
@@ -391,8 +393,12 @@ const MessageMonitor: React.FC = () => {
           title="实时消息列表"
           extra={
             <Space>
-              <Button icon={<ReloadOutlined />}>刷新</Button>
-              <Button type="primary" icon={<ThunderboltOutlined />}>
+              <Button>
+                <ReloadOutlined />
+                刷新
+              </Button>
+              <Button type="primary">
+                <ThunderboltOutlined />
                 AI 分析
               </Button>
             </Space>

@@ -130,7 +130,9 @@ const SystemMonitor: React.FC = () => {
       render: (_: any, record: SystemMetric) => (
         <Space size="middle">
           <Tooltip title="查看详情">
-            <Button type="text" icon={<MonitorOutlined />} />
+            <Button type="text">
+              <MonitorOutlined />
+            </Button>
           </Tooltip>
           <Tooltip title="AI 分析">
             <Button 
@@ -279,8 +281,12 @@ const SystemMonitor: React.FC = () => {
           title="实时指标监控"
           extra={
             <Space>
-              <Button icon={<ReloadOutlined />}>刷新</Button>
-              <Button type="primary" icon={<ThunderboltOutlined />}>
+              <Button>
+                <ReloadOutlined />
+                刷新
+              </Button>
+              <Button type="primary">
+                <ThunderboltOutlined />
                 AI 预测
               </Button>
             </Space>

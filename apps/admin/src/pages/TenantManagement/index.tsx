@@ -153,7 +153,9 @@ const TenantManagement: React.FC = () => {
       render: (_: any, record: Tenant) => (
         <Space size="middle">
           <Tooltip title="查看详情">
-            <Button type="text" icon={<EyeOutlined />} />
+            <Button type="text">
+              <EyeOutlined />
+            </Button>
           </Tooltip>
           <Tooltip title="编辑">
             <Button 
