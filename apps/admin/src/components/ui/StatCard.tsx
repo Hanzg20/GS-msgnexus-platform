@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface StatCardProps {
@@ -25,89 +24,139 @@ const StatCard: React.FC<StatCardProps> = ({
 }) => {
   const colorClasses = {
     primary: {
-      bg: 'bg-primary-50',
-      icon: 'bg-primary-500',
-      text: 'text-primary-600',
-      border: 'border-primary-200',
+      bg: '#eff6ff',
+      icon: '#3b82f6',
+      text: '#1d4ed8',
+      border: '#bfdbfe',
     },
     success: {
-      bg: 'bg-success-50',
-      icon: 'bg-success-500',
-      text: 'text-success-600',
-      border: 'border-success-200',
+      bg: '#f0fdf4',
+      icon: '#22c55e',
+      text: '#15803d',
+      border: '#bbf7d0',
     },
     warning: {
-      bg: 'bg-warning-50',
-      icon: 'bg-warning-500',
-      text: 'text-warning-600',
-      border: 'border-warning-200',
+      bg: '#fffbeb',
+      icon: '#f59e0b',
+      text: '#d97706',
+      border: '#fde68a',
     },
     error: {
-      bg: 'bg-error-50',
-      icon: 'bg-error-500',
-      text: 'text-error-600',
-      border: 'border-error-200',
+      bg: '#fef2f2',
+      icon: '#ef4444',
+      text: '#dc2626',
+      border: '#fecaca',
     },
     purple: {
-      bg: 'bg-purple-50',
-      icon: 'bg-purple-500',
-      text: 'text-purple-600',
-      border: 'border-purple-200',
+      bg: '#faf5ff',
+      icon: '#8b5cf6',
+      text: '#7c3aed',
+      border: '#c4b5fd',
     },
     indigo: {
-      bg: 'bg-indigo-50',
-      icon: 'bg-indigo-500',
-      text: 'text-indigo-600',
-      border: 'border-indigo-200',
+      bg: '#eef2ff',
+      icon: '#6366f1',
+      text: '#4f46e5',
+      border: '#c7d2fe',
     },
   };
 
   const colors = colorClasses[color];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={`relative overflow-hidden rounded-xl border ${colors.border} ${colors.bg} p-6 ${className}`}
+    <div
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: '12px',
+        border: `1px solid ${colors.border}`,
+        backgroundColor: colors.bg,
+        padding: '24px',
+        transition: 'all 0.3s ease-in-out',
+        ...className && { className }
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
     >
       {/* 装饰性背景 */}
-      <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full opacity-10 bg-gradient-to-br from-current to-transparent" />
+      <div style={{
+        position: 'absolute',
+        top: '-16px',
+        right: '-16px',
+        width: '96px',
+        height: '96px',
+        borderRadius: '50%',
+        opacity: 0.1,
+        background: `linear-gradient(135deg, ${colors.icon}, transparent)`
+      }} />
       
-      <div className="relative z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ flex: 1 }}>
+            <p style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#6b7280',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '8px'
+            }}>
               {title}
             </p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
+            <p style={{
+              marginTop: '8px',
+              fontSize: '30px',
+              fontWeight: 'bold',
+              color: '#111827'
+            }}>
               {value}
             </p>
             {trend && (
-              <div className="mt-2 flex items-center">
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center' }}>
                 {trend.isPositive ? (
-                  <TrendingUp className="w-4 h-4 text-success-500 mr-1" />
+                  <TrendingUp style={{ width: '16px', height: '16px', color: '#22c55e', marginRight: '4px' }} />
                 ) : (
-                  <TrendingDown className="w-4 h-4 text-error-500 mr-1" />
+                  <TrendingDown style={{ width: '16px', height: '16px', color: '#ef4444', marginRight: '4px' }} />
                 )}
-                <span className={`text-sm font-medium ${
-                  trend.isPositive ? 'text-success-600' : 'text-error-600'
-                }`}>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: trend.isPositive ? '#15803d' : '#dc2626'
+                }}>
                   {trend.value}%
                 </span>
-                <span className="text-sm text-gray-500 ml-1">
+                <span style={{
+                  fontSize: '14px',
+                  color: '#6b7280',
+                  marginLeft: '4px'
+                }}>
                   {trend.label}
                 </span>
               </div>
             )}
           </div>
           
-          <div className={`w-12 h-12 rounded-lg ${colors.icon} flex items-center justify-center text-white`}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '8px',
+            backgroundColor: colors.icon,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white'
+          }}>
             {icon}
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

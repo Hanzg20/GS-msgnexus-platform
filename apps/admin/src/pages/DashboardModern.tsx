@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Users, 
   Building2, 
@@ -70,113 +69,102 @@ const DashboardModern: React.FC = () => {
     { name: '错误', value: 10, color: '#ef4444' },
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center"
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full mx-auto mb-4"
-          />
-          <p className="text-gray-600 text-lg">正在加载系统数据...</p>
-        </motion.div>
+      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #e5e7eb',
+            borderTop: '4px solid #3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <p style={{ color: '#6b7280', fontSize: '18px' }}>正在加载系统数据...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
       {/* 头部 */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">仪表板</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>仪表板</h1>
+            <p style={{ color: '#6b7280', marginTop: '4px' }}>
               欢迎回来！这里是您的系统概览和关键指标
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', width: '16px', height: '16px' }} />
               <input
                 type="text"
                 placeholder="搜索..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                style={{
+                  paddingLeft: '40px',
+                  paddingRight: '16px',
+                  paddingTop: '8px',
+                  paddingBottom: '8px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  width: '200px'
+                }}
               />
             </div>
             <Button variant="ghost">
-              <Bell className="w-5 h-5" />
+              <Bell style={{ width: '20px', height: '20px' }} />
             </Button>
             <Button variant="ghost">
-              <Settings className="w-5 h-5" />
+              <Settings style={{ width: '20px', height: '20px' }} />
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-6"
-        >
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* 统计卡片 */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
             <StatCard
               title="总租户数"
               value={stats.tenants}
-              icon={<Building2 className="w-6 h-6" />}
+              icon={<Building2 style={{ width: '24px', height: '24px' }} />}
               trend={{ value: 12, isPositive: true, label: '本月' }}
               color="primary"
             />
             <StatCard
               title="活跃用户"
               value={stats.users.toLocaleString()}
-              icon={<Users className="w-6 h-6" />}
+              icon={<Users style={{ width: '24px', height: '24px' }} />}
               trend={{ value: 8, isPositive: true, label: '本周' }}
               color="success"
             />
             <StatCard
               title="今日消息"
               value={stats.messages.toLocaleString()}
-              icon={<MessageSquare className="w-6 h-6" />}
+              icon={<MessageSquare style={{ width: '24px', height: '24px' }} />}
               trend={{ value: 15, isPositive: true, label: '今日' }}
               color="warning"
             />
             <StatCard
               title="系统状态"
               value={stats.systemStatus}
-              icon={<Shield className="w-6 h-6" />}
+              icon={<Shield style={{ width: '24px', height: '24px' }} />}
               color="purple"
             />
-          </motion.div>
+          </div>
 
           {/* 图表区域 */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
             <Card>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">消息流量趋势</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>消息流量趋势</h3>
                 <Button variant="ghost" size="sm">查看详情</Button>
               </div>
               <ResponsiveContainer width="100%" height={300}>
@@ -198,15 +186,14 @@ const DashboardModern: React.FC = () => {
                     stroke="#3b82f6"
                     fill="#3b82f6"
                     fillOpacity={0.1}
-                    strokeWidth={2}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
 
             <Card>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">用户活跃度</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>用户活跃度</h3>
                 <Button variant="ghost" size="sm">查看详情</Button>
               </div>
               <ResponsiveContainer width="100%" height={300}>
@@ -225,19 +212,52 @@ const DashboardModern: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="active"
-                    stroke="#22c55e"
+                    stroke="#10b981"
                     strokeWidth={3}
-                    dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             </Card>
-          </motion.div>
+          </div>
 
-          {/* 系统监控和状态 */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 系统状态卡片 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
             <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">系统状态分布</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统资源使用率</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ color: '#6b7280' }}>CPU 使用率</span>
+                    <span style={{ fontWeight: '600' }}>{stats.cpuUsage}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${stats.cpuUsage}%`, height: '100%', backgroundColor: '#3b82f6', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ color: '#6b7280' }}>内存使用率</span>
+                    <span style={{ fontWeight: '600' }}>{stats.memoryUsage}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${stats.memoryUsage}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ color: '#6b7280' }}>磁盘使用率</span>
+                    <span style={{ fontWeight: '600' }}>{stats.diskUsage}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${stats.diskUsage}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统状态分布</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -253,118 +273,28 @@ const DashboardModern: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    }}
-                  />
+                  <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="mt-4 space-y-2">
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px' }}>
                 {pieData.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm text-gray-600">{item.name}</span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">{item.value}%</span>
+                  <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '12px', height: '12px', backgroundColor: item.color, borderRadius: '50%' }} />
+                    <span style={{ fontSize: '14px', color: '#6b7280' }}>{item.name}</span>
                   </div>
                 ))}
               </div>
             </Card>
-
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">系统资源监控</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">CPU 使用率</span>
-                    <span className="text-sm font-medium text-gray-900">{stats.cpuUsage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stats.cpuUsage}%` }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                      className="bg-primary-500 h-2 rounded-full"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">内存使用率</span>
-                    <span className="text-sm font-medium text-gray-900">{stats.memoryUsage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stats.memoryUsage}%` }}
-                      transition={{ duration: 1, delay: 0.7 }}
-                      className="bg-warning-500 h-2 rounded-full"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">磁盘使用率</span>
-                    <span className="text-sm font-medium text-gray-900">{stats.diskUsage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stats.diskUsage}%` }}
-                      transition={{ duration: 1, delay: 0.9 }}
-                      className="bg-success-500 h-2 rounded-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
-              <div className="space-y-3">
-                <Button 
-                  variant="primary" 
-                  className="w-full justify-start"
-                  icon={<Users className="w-4 h-4" />}
-                >
-                  管理用户
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  className="w-full justify-start"
-                  icon={<Building2 className="w-4 h-4" />}
-                >
-                  租户配置
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  className="w-full justify-start"
-                  icon={<MessageSquare className="w-4 h-4" />}
-                >
-                  消息监控
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  className="w-full justify-start"
-                  icon={<Activity className="w-4 h-4" />}
-                >
-                  系统监控
-                </Button>
-              </div>
-            </Card>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
