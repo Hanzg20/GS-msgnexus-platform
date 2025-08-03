@@ -1,52 +1,19 @@
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import morgan from 'morgan';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
 import dotenv from 'dotenv';
-import { logger } from './utils/logger';
-import { errorHandler } from './middleware/errorHandler';
-import { rateLimiterMiddleware } from './middleware/rateLimiter';
-import { authMiddleware } from './middleware/auth';
-import { validate } from './middleware/validation';
-
-// Routes
 import tenantsRouter from './routes/tenants';
-import usersRouter from './routes/users';
-import messagesRouter from './routes/messages';
-import systemRouter from './routes/system';
-import aiRouter from './routes/ai';
 
 dotenv.config();
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
-});
-
 const PORT = process.env.PORT || 3030;
 
-// Middleware
-app.use(helmet());
-app.use(compression());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true
-}));
-app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
-app.use(express.json({ limit: '10mb' }));
+// 中间件
+app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-app.use(rateLimiterMiddleware);
-
-// Health check
+// 健康检查
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -56,69 +23,31 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/v1/tenants', authMiddleware, tenantsRouter);
-app.use('/api/v1/users', authMiddleware, usersRouter);
-app.use('/api/v1/messages', authMiddleware, messagesRouter);
-app.use('/api/v1/system', authMiddleware, systemRouter);
-app.use('/api/v1/ai', authMiddleware, aiRouter);
+// API 路由
+app.use('/api/v1/tenants', tenantsRouter);
 
-// Socket.IO events
-io.on('connection', (socket) => {
-  logger.info(`Client connected: ${socket.id}`);
-
-  socket.on('join-tenant', (tenantId) => {
-    socket.join(`tenant-${tenantId}`);
-    logger.info(`Client ${socket.id} joined tenant ${tenantId}`);
-  });
-
-  socket.on('send-message', (data) => {
-    // Broadcast message to tenant room
-    socket.to(`tenant-${data.tenantId}`).emit('new-message', data);
-    logger.info(`Message sent in tenant ${data.tenantId}`);
-  });
-
-  socket.on('disconnect', () => {
-    logger.info(`Client disconnected: ${socket.id}`);
+// 错误处理中间件
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: '服务器内部错误',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
   });
 });
 
-// Error handling
-app.use(errorHandler);
-
-// 404 handler
+// 404 处理
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    error: {
-      code: 'NOT_FOUND',
-      message: 'API endpoint not found'
-    }
+    message: '接口不存在'
   });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Process terminated');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Process terminated');
-    process.exit(0);
-  });
-});
-
-server.listen(PORT, () => {
-  logger.info(`🚀 MsgNexus API Server running on port ${PORT}`);
-  logger.info(`📊 Health check: http://localhost:${PORT}/health`);
-  logger.info(`🔌 Socket.IO ready for real-time communication`);
+app.listen(PORT, () => {
+  console.log(`🚀 API 服务器运行在端口 ${PORT}`);
+  console.log(`📊 健康检查: http://localhost:${PORT}/health`);
+  console.log(`🏢 租户管理: http://localhost:${PORT}/api/v1/tenants`);
 });
 
 export default app; 
-export { app, io }; 

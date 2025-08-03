@@ -1,28 +1,68 @@
-const express = require('express');
-const cors = require('cors');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
+import express from 'express';
+import cors from 'cors';
+import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
-});
-
 const PORT = process.env.PORT || 3030;
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
+// 中间件
+app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// 租户数据存储 (实际项目中应该使用数据库)
+let tenants = [
+  {
+    id: '1',
+    name: 'Acme Corporation',
+    subdomain: 'acme',
+    planType: 'enterprise',
+    status: 'active',
+    userCount: 1250,
+    messageCount: 45678,
+    createdAt: '2024-01-15',
+    lastActive: '2024-01-20 14:30',
+    config: {
+      maxUsers: 2000,
+      maxMessages: 100000,
+      features: ['advanced_analytics', 'custom_branding', 'priority_support']
+    }
+  },
+  {
+    id: '2',
+    name: 'TechStart Inc',
+    subdomain: 'techstart',
+    planType: 'professional',
+    status: 'active',
+    userCount: 456,
+    messageCount: 12345,
+    createdAt: '2024-01-10',
+    lastActive: '2024-01-20 15:45',
+    config: {
+      maxUsers: 1000,
+      maxMessages: 50000,
+      features: ['basic_analytics', 'custom_branding']
+    }
+  },
+  {
+    id: '3',
+    name: 'InnovateLab',
+    subdomain: 'innovatelab',
+    planType: 'basic',
+    status: 'suspended',
+    userCount: 89,
+    messageCount: 2345,
+    createdAt: '2024-01-05',
+    lastActive: '2024-01-18 09:15',
+    config: {
+      maxUsers: 500,
+      maxMessages: 10000,
+      features: ['basic_analytics']
+    }
+  }
+];
+
+// 健康检查
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -32,282 +72,317 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'MsgNexus API is running!',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Mock data
-const mockTenants = [
-  {
-    id: '1',
-    name: '示例租户 1',
-    domain: 'tenant1.msgnexus.com',
-    status: 'active',
-    userCount: 25,
-    messageCount: 1000,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: '示例租户 2',
-    domain: 'tenant2.msgnexus.com',
-    status: 'active',
-    userCount: 15,
-    messageCount: 500,
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z'
-  }
-];
-
-const mockUsers = [
-  {
-    id: '1',
-    username: 'admin',
-    email: 'admin@msgnexus.com',
-    role: 'admin',
-    status: 'active',
-    lastLoginAt: '2024-01-01T00:00:00Z',
-    createdAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    username: 'user1',
-    email: 'user1@msgnexus.com',
-    role: 'user',
-    status: 'active',
-    lastLoginAt: '2024-01-01T00:00:00Z',
-    createdAt: '2024-01-01T00:00:00Z'
-  }
-];
-
-const mockMessages = [
-  {
-    id: '1',
-    senderId: '1',
-    receiverId: '2',
-    content: 'Hello, World!',
-    type: 'text',
-    status: 'read',
-    createdAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    senderId: '2',
-    receiverId: '1',
-    content: 'Hi there!',
-    type: 'text',
-    status: 'sent',
-    createdAt: '2024-01-01T01:00:00Z'
-  }
-];
-
-// API Routes
-app.get('/api/tenants', (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const search = req.query.search || '';
-
-  let filteredTenants = mockTenants;
-  if (search) {
-    filteredTenants = mockTenants.filter(tenant => 
-      tenant.name.toLowerCase().includes(search.toLowerCase()) ||
-      tenant.domain.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedTenants = filteredTenants.slice(startIndex, endIndex);
-
-  res.json({
-    success: true,
-    data: {
-      tenants: paginatedTenants,
+// 获取所有租户
+app.get('/api/v1/tenants', (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, planType } = req.query;
+    
+    let filteredTenants = [...tenants];
+    
+    // 状态过滤
+    if (status) {
+      filteredTenants = filteredTenants.filter(tenant => tenant.status === status);
+    }
+    
+    // 套餐类型过滤
+    if (planType) {
+      filteredTenants = filteredTenants.filter(tenant => tenant.planType === planType);
+    }
+    
+    // 分页
+    const startIndex = (Number(page) - 1) * Number(limit);
+    const endIndex = startIndex + Number(limit);
+    const paginatedTenants = filteredTenants.slice(startIndex, endIndex);
+    
+    res.json({
+      success: true,
+      data: paginatedTenants,
       pagination: {
-        page,
-        limit,
+        page: Number(page),
+        limit: Number(limit),
         total: filteredTenants.length,
-        pages: Math.ceil(filteredTenants.length / limit)
+        totalPages: Math.ceil(filteredTenants.length / Number(limit))
       }
-    }
-  });
-});
-
-app.get('/api/users', (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const tenantId = req.query.tenantId;
-
-  let filteredUsers = mockUsers;
-  if (tenantId) {
-    // In real implementation, filter by tenantId
-    filteredUsers = mockUsers;
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取租户列表失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
-
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-
-  res.json({
-    success: true,
-    data: {
-      users: paginatedUsers,
-      pagination: {
-        page,
-        limit,
-        total: filteredUsers.length,
-        pages: Math.ceil(filteredUsers.length / limit)
-      }
-    }
-  });
 });
 
-app.get('/api/messages', (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const userId = req.query.userId;
-
-  let filteredMessages = mockMessages;
-  if (userId) {
-    filteredMessages = mockMessages.filter(msg => 
-      msg.senderId === userId || msg.receiverId === userId
-    );
+// 获取单个租户
+app.get('/api/v1/tenants/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = tenants.find(t => t.id === id);
+    
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: tenant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取租户信息失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
+});
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedMessages = filteredMessages.slice(startIndex, endIndex);
+// 创建租户
+app.post('/api/v1/tenants', (req, res) => {
+  try {
+    const { name, subdomain, planType } = req.body;
+    
+    // 验证必填字段
+    if (!name || !subdomain || !planType) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少必填字段'
+      });
+    }
+    
+    // 检查子域名是否已存在
+    const existingTenant = tenants.find(t => t.subdomain === subdomain);
+    if (existingTenant) {
+      return res.status(400).json({
+        success: false,
+        message: '子域名已存在'
+      });
+    }
+    
+    // 根据套餐类型设置配置
+    const getConfigByPlan = (plan: string) => {
+      switch (plan) {
+        case 'basic':
+          return {
+            maxUsers: 500,
+            maxMessages: 10000,
+            features: ['basic_analytics']
+          };
+        case 'professional':
+          return {
+            maxUsers: 1000,
+            maxMessages: 50000,
+            features: ['basic_analytics', 'custom_branding']
+          };
+        case 'enterprise':
+          return {
+            maxUsers: 2000,
+            maxMessages: 100000,
+            features: ['advanced_analytics', 'custom_branding', 'priority_support']
+          };
+        default:
+          return {
+            maxUsers: 500,
+            maxMessages: 10000,
+            features: ['basic_analytics']
+          };
+      }
+    };
+    
+    const newTenant = {
+      id: uuidv4(),
+      name,
+      subdomain,
+      planType,
+      status: 'active',
+      userCount: 0,
+      messageCount: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+      lastActive: new Date().toLocaleString(),
+      config: getConfigByPlan(planType)
+    };
+    
+    tenants.push(newTenant);
+    
+    res.status(201).json({
+      success: true,
+      message: '租户创建成功',
+      data: newTenant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '创建租户失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
 
-  res.json({
-    success: true,
-    data: {
-      messages: paginatedMessages,
-      pagination: {
-        page,
-        limit,
-        total: filteredMessages.length,
-        pages: Math.ceil(filteredMessages.length / limit)
+// 更新租户
+app.put('/api/v1/tenants/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const tenantIndex = tenants.findIndex(t => t.id === id);
+    if (tenantIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
+    // 检查子域名唯一性
+    if (updateData.subdomain) {
+      const existingTenant = tenants.find(t => t.subdomain === updateData.subdomain && t.id !== id);
+      if (existingTenant) {
+        return res.status(400).json({
+          success: false,
+          message: '子域名已存在'
+        });
       }
     }
-  });
+    
+    // 更新租户信息
+    tenants[tenantIndex] = {
+      ...tenants[tenantIndex],
+      ...updateData,
+      lastActive: new Date().toLocaleString()
+    };
+    
+    res.json({
+      success: true,
+      message: '租户更新成功',
+      data: tenants[tenantIndex]
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '更新租户失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-// System endpoints
-app.get('/api/system/overview', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      system: {
-        cpu: 45.2,
-        memory: 68.5,
-        disk: 32.1,
-        network: {
-          in: 1024,
-          out: 2048
-        }
-      },
-      services: {
-        api: 'running',
-        realtime: 'running',
-        database: 'running',
-        redis: 'running'
-      },
-      uptime: 86400
+// 删除租户
+app.delete('/api/v1/tenants/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const tenantIndex = tenants.findIndex(t => t.id === id);
+    if (tenantIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
     }
-  });
+    
+    tenants.splice(tenantIndex, 1);
+    
+    res.json({
+      success: true,
+      message: '租户删除成功'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '删除租户失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-app.get('/api/system/metrics', (req, res) => {
-  const period = req.query.period || '1h';
-  
-  res.json({
-    success: true,
-    data: {
-      metrics: {
-        responseTime: [120, 115, 118, 125],
-        errorRate: [0.1, 0.2, 0.1, 0.3],
-        throughput: [1000, 1200, 1100, 1300],
-        concurrentUsers: [50, 60, 55, 65]
-      },
-      timestamps: [
-        '2024-01-01T00:00:00Z',
-        '2024-01-01T01:00:00Z',
-        '2024-01-01T02:00:00Z',
-        '2024-01-01T03:00:00Z'
-      ]
+// 更新租户状态
+app.patch('/api/v1/tenants/:id/status', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
     }
-  });
+    
+    tenant.status = status;
+    tenant.lastActive = new Date().toLocaleString();
+    
+    res.json({
+      success: true,
+      message: '租户状态更新成功',
+      data: tenant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '更新租户状态失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-// AI endpoints
-app.get('/api/ai/config', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      enabled: true,
-      provider: 'openai',
-      model: 'gpt-3.5-turbo',
-      maxTokens: 1000,
-      temperature: 0.7
+// 获取租户统计信息
+app.get('/api/v1/tenants/:id/stats', (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = tenants.find(t => t.id === id);
+    
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
     }
-  });
+    
+    const stats = {
+      userCount: tenant.userCount,
+      messageCount: tenant.messageCount,
+      userUsage: Math.round((tenant.userCount / tenant.config.maxUsers) * 100),
+      messageUsage: Math.round((tenant.messageCount / tenant.config.maxMessages) * 100),
+      lastActive: tenant.lastActive,
+      uptime: Math.floor(Math.random() * 100) + '%', // 模拟数据
+      responseTime: Math.floor(Math.random() * 50) + 'ms' // 模拟数据
+    };
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取租户统计信息失败',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-// Socket.IO events
-io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-
-  socket.on('join-tenant', (tenantId) => {
-    socket.join(`tenant-${tenantId}`);
-    console.log(`Client ${socket.id} joined tenant ${tenantId}`);
-  });
-
-  socket.on('send-message', (data) => {
-    // Broadcast message to tenant room
-    socket.to(`tenant-${data.tenantId}`).emit('new-message', data);
-    console.log(`Message sent in tenant ${data.tenantId}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
-  });
-});
-
-// Error handling
-app.use((error, req, res, next) => {
-  console.error('Error:', error);
+// 错误处理中间件
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
   res.status(500).json({
     success: false,
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: 'Internal server error'
-    }
+    message: '服务器内部错误',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
   });
 });
 
-// 404 handler
+// 404 处理
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    error: {
-      code: 'NOT_FOUND',
-      message: 'API endpoint not found'
-    }
+    message: '接口不存在'
   });
 });
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`🚀 MsgNexus API Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔌 Socket.IO ready for real-time communication`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+app.listen(PORT, () => {
+  console.log(`🚀 API 服务器运行在端口 ${PORT}`);
+  console.log(`📊 健康检查: http://localhost:${PORT}/health`);
+  console.log(`🏢 租户管理: http://localhost:${PORT}/api/v1/tenants`);
 });
 
-module.exports = { app, io }; 
+export default app; 

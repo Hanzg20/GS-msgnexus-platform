@@ -1,429 +1,347 @@
-import { Router } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
-import { authMiddleware, requireRole, requireTenant } from '../middleware/auth';
-import { validate } from '../middleware/validation';
-import { tenantSchemas } from '../middleware/validation';
-import { logger } from '../utils/logger';
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
-const router = Router();
+const router = express.Router();
 
-// 获取所有租户列表
-router.get('/', 
-  authMiddleware, 
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { page = 1, limit = 20, search, status, planType } = req.query;
+// 租户数据存储 (实际项目中应该使用数据库)
+let tenants = [
+  {
+    id: '1',
+    name: 'Acme Corporation',
+    subdomain: 'acme',
+    planType: 'enterprise',
+    status: 'active',
+    userCount: 1250,
+    messageCount: 45678,
+    createdAt: '2024-01-15',
+    lastActive: '2024-01-20 14:30',
+    config: {
+      maxUsers: 2000,
+      maxMessages: 100000,
+      features: ['advanced_analytics', 'custom_branding', 'priority_support']
+    }
+  },
+  {
+    id: '2',
+    name: 'TechStart Inc',
+    subdomain: 'techstart',
+    planType: 'professional',
+    status: 'active',
+    userCount: 456,
+    messageCount: 12345,
+    createdAt: '2024-01-10',
+    lastActive: '2024-01-20 15:45',
+    config: {
+      maxUsers: 1000,
+      maxMessages: 50000,
+      features: ['basic_analytics', 'custom_branding']
+    }
+  },
+  {
+    id: '3',
+    name: 'InnovateLab',
+    subdomain: 'innovatelab',
+    planType: 'basic',
+    status: 'suspended',
+    userCount: 89,
+    messageCount: 2345,
+    createdAt: '2024-01-05',
+    lastActive: '2024-01-18 09:15',
+    config: {
+      maxUsers: 500,
+      maxMessages: 10000,
+      features: ['basic_analytics']
+    }
+  }
+];
+
+// 获取所有租户
+router.get('/', (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, planType } = req.query;
     
-    logger.info(`Fetching tenants list`, {
-      page,
-      limit,
-      search,
-      status,
-      planType,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户服务
-    const mockTenants = [
-      {
-        id: '1',
-        name: 'GoldSky Corp',
-        subdomain: 'goldsky',
-        planType: 'enterprise',
-        status: 'active',
-        userCount: 150,
-        messageCount: 50000,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        name: 'Tech Startup',
-        subdomain: 'techstartup',
-        planType: 'pro',
-        status: 'active',
-        userCount: 25,
-        messageCount: 15000,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-
+    let filteredTenants = [...tenants];
+    
+    // 状态过滤
+    if (status) {
+      filteredTenants = filteredTenants.filter(tenant => tenant.status === status);
+    }
+    
+    // 套餐类型过滤
+    if (planType) {
+      filteredTenants = filteredTenants.filter(tenant => tenant.planType === planType);
+    }
+    
+    // 分页
+    const startIndex = (Number(page) - 1) * Number(limit);
+    const endIndex = startIndex + Number(limit);
+    const paginatedTenants = filteredTenants.slice(startIndex, endIndex);
+    
     res.json({
       success: true,
-      data: mockTenants,
+      data: paginatedTenants,
       pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: mockTenants.length,
-        pages: Math.ceil(mockTenants.length / parseInt(limit as string))
+        page: Number(page),
+        limit: Number(limit),
+        total: filteredTenants.length,
+        totalPages: Math.ceil(filteredTenants.length / Number(limit))
       }
     });
-  })
-);
-
-// 获取单个租户详情
-router.get('/:id',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    
-    logger.info(`Fetching tenant details`, {
-      tenantId: id,
-      userId: req.user?.id
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取租户列表失败',
+      error: error.message
     });
+  }
+});
 
-    // TODO: 实现租户服务
-    const mockTenant = {
-      id,
-      name: 'GoldSky Corp',
-      subdomain: 'goldsky',
-      planType: 'enterprise',
-      status: 'active',
-      settings: {
-        timezone: 'UTC',
-        language: 'en',
-        features: {
-          ai: true,
-          analytics: true,
-          customBranding: true
-        }
-      },
-      stats: {
-        userCount: 150,
-        messageCount: 50000,
-        activeUsers: 120,
-        storageUsed: '2.5GB',
-        lastActivity: new Date().toISOString()
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
+// 获取单个租户
+router.get('/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = tenants.find(t => t.id === id);
+    
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
     res.json({
       success: true,
-      data: mockTenant
+      data: tenant
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取租户信息失败',
+      error: error.message
+    });
+  }
+});
 
-// 创建新租户
-router.post('/',
-  authMiddleware,
-  requireRole(['super_admin']),
-  validate(tenantSchemas.createTenant),
-  asyncHandler(async (req, res) => {
-    const tenantData = req.body;
+// 创建租户
+router.post('/', (req, res) => {
+  try {
+    const { name, subdomain, planType } = req.body;
     
-    logger.info(`Creating new tenant`, {
-      tenantData,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户服务
-    const newTenant = {
-      id: '3',
-      ...tenantData,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    // 验证必填字段
+    if (!name || !subdomain || !planType) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少必填字段'
+      });
+    }
+    
+    // 检查子域名是否已存在
+    const existingTenant = tenants.find(t => t.subdomain === subdomain);
+    if (existingTenant) {
+      return res.status(400).json({
+        success: false,
+        message: '子域名已存在'
+      });
+    }
+    
+    // 根据套餐类型设置配置
+    const getConfigByPlan = (plan: string) => {
+      switch (plan) {
+        case 'basic':
+          return {
+            maxUsers: 500,
+            maxMessages: 10000,
+            features: ['basic_analytics']
+          };
+        case 'professional':
+          return {
+            maxUsers: 1000,
+            maxMessages: 50000,
+            features: ['basic_analytics', 'custom_branding']
+          };
+        case 'enterprise':
+          return {
+            maxUsers: 2000,
+            maxMessages: 100000,
+            features: ['advanced_analytics', 'custom_branding', 'priority_support']
+          };
+        default:
+          return {
+            maxUsers: 500,
+            maxMessages: 10000,
+            features: ['basic_analytics']
+          };
+      }
     };
-
+    
+    const newTenant = {
+      id: uuidv4(),
+      name,
+      subdomain,
+      planType,
+      status: 'active',
+      userCount: 0,
+      messageCount: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+      lastActive: new Date().toLocaleString(),
+      config: getConfigByPlan(planType)
+    };
+    
+    tenants.push(newTenant);
+    
     res.status(201).json({
       success: true,
-      data: newTenant,
-      message: 'Tenant created successfully'
+      message: '租户创建成功',
+      data: newTenant
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '创建租户失败',
+      error: error.message
+    });
+  }
+});
 
-// 更新租户信息
-router.put('/:id',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  validate(tenantSchemas.updateTenant),
-  asyncHandler(async (req, res) => {
+// 更新租户
+router.put('/:id', (req, res) => {
+  try {
     const { id } = req.params;
     const updateData = req.body;
     
-    logger.info(`Updating tenant`, {
-      tenantId: id,
-      updateData,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户服务
-    const updatedTenant = {
-      id,
-      name: 'GoldSky Corp Updated',
-      subdomain: 'goldsky',
-      planType: 'enterprise',
-      status: 'active',
+    const tenantIndex = tenants.findIndex(t => t.id === id);
+    if (tenantIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
+    // 检查子域名唯一性
+    if (updateData.subdomain) {
+      const existingTenant = tenants.find(t => t.subdomain === updateData.subdomain && t.id !== id);
+      if (existingTenant) {
+        return res.status(400).json({
+          success: false,
+          message: '子域名已存在'
+        });
+      }
+    }
+    
+    // 更新租户信息
+    tenants[tenantIndex] = {
+      ...tenants[tenantIndex],
       ...updateData,
-      updatedAt: new Date().toISOString()
+      lastActive: new Date().toLocaleString()
     };
-
+    
     res.json({
       success: true,
-      data: updatedTenant,
-      message: 'Tenant updated successfully'
+      message: '租户更新成功',
+      data: tenants[tenantIndex]
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '更新租户失败',
+      error: error.message
+    });
+  }
+});
 
 // 删除租户
-router.delete('/:id',
-  authMiddleware,
-  requireRole(['super_admin']),
-  asyncHandler(async (req, res) => {
+router.delete('/:id', (req, res) => {
+  try {
     const { id } = req.params;
     
-    logger.info(`Deleting tenant`, {
-      tenantId: id,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户服务
-    // 注意：删除租户会级联删除所有相关数据
-
+    const tenantIndex = tenants.findIndex(t => t.id === id);
+    if (tenantIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
+    tenants.splice(tenantIndex, 1);
+    
     res.json({
       success: true,
-      message: 'Tenant deleted successfully'
+      message: '租户删除成功'
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '删除租户失败',
+      error: error.message
+    });
+  }
+});
+
+// 更新租户状态
+router.patch('/:id/status', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
+    tenant.status = status;
+    tenant.lastActive = new Date().toLocaleString();
+    
+    res.json({
+      success: true,
+      message: '租户状态更新成功',
+      data: tenant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '更新租户状态失败',
+      error: error.message
+    });
+  }
+});
 
 // 获取租户统计信息
-router.get('/:id/stats',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
+router.get('/:id/stats', (req, res) => {
+  try {
     const { id } = req.params;
-    const { period = '30d' } = req.query;
+    const tenant = tenants.find(t => t.id === id);
     
-    logger.info(`Fetching tenant stats`, {
-      tenantId: id,
-      period,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户统计服务
-    const mockStats = {
-      tenantId: id,
-      period,
-      users: {
-        total: 150,
-        active: 120,
-        new: 15,
-        growth: 10.5
-      },
-      messages: {
-        total: 50000,
-        sent: 48000,
-        delivered: 47500,
-        failed: 500,
-        deliveryRate: 98.96
-      },
-      performance: {
-        avgResponseTime: 120,
-        uptime: 99.9,
-        errors: 0.1
-      },
-      storage: {
-        used: '2.5GB',
-        limit: '10GB',
-        usage: 25
-      },
-      revenue: {
-        monthly: 2500,
-        growth: 15.2
-      }
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: '租户不存在'
+      });
+    }
+    
+    const stats = {
+      userCount: tenant.userCount,
+      messageCount: tenant.messageCount,
+      userUsage: Math.round((tenant.userCount / tenant.config.maxUsers) * 100),
+      messageUsage: Math.round((tenant.messageCount / tenant.config.maxMessages) * 100),
+      lastActive: tenant.lastActive,
+      uptime: Math.floor(Math.random() * 100) + '%', // 模拟数据
+      responseTime: Math.floor(Math.random() * 50) + 'ms' // 模拟数据
     };
-
-    res.json({
-      success: true,
-      data: mockStats
-    });
-  })
-);
-
-// 获取租户用户列表
-router.get('/:id/users',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { page = 1, limit = 20, status, role } = req.query;
     
-    logger.info(`Fetching tenant users`, {
-      tenantId: id,
-      page,
-      limit,
-      status,
-      role,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户用户服务
-    const mockUsers = [
-      {
-        id: '1',
-        email: 'admin@goldsky.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        role: 'admin',
-        status: 'active',
-        lastLogin: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        email: 'user@goldsky.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        role: 'user',
-        status: 'active',
-        lastLogin: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      }
-    ];
-
     res.json({
       success: true,
-      data: mockUsers,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: mockUsers.length,
-        pages: Math.ceil(mockUsers.length / parseInt(limit as string))
-      }
+      data: stats
     });
-  })
-);
-
-// 获取租户消息统计
-router.get('/:id/messages',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { startDate, endDate, type } = req.query;
-    
-    logger.info(`Fetching tenant messages`, {
-      tenantId: id,
-      startDate,
-      endDate,
-      type,
-      userId: req.user?.id
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取租户统计信息失败',
+      error: error.message
     });
-
-    // TODO: 实现租户消息服务
-    const mockMessages = [
-      {
-        id: '1',
-        content: 'Hello world',
-        type: 'text',
-        sender: 'user1',
-        timestamp: new Date().toISOString(),
-        status: 'delivered'
-      },
-      {
-        id: '2',
-        content: 'How are you?',
-        type: 'text',
-        sender: 'user2',
-        timestamp: new Date().toISOString(),
-        status: 'delivered'
-      }
-    ];
-
-    res.json({
-      success: true,
-      data: mockMessages,
-      summary: {
-        total: 50000,
-        delivered: 49500,
-        failed: 500,
-        deliveryRate: 99.0
-      }
-    });
-  })
-);
-
-// 租户设置管理
-router.get('/:id/settings',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    
-    logger.info(`Fetching tenant settings`, {
-      tenantId: id,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户设置服务
-    const mockSettings = {
-      tenantId: id,
-      general: {
-        timezone: 'UTC',
-        language: 'en',
-        dateFormat: 'YYYY-MM-DD',
-        timeFormat: '24h'
-      },
-      features: {
-        ai: true,
-        analytics: true,
-        customBranding: true,
-        advancedSecurity: false
-      },
-      notifications: {
-        email: true,
-        push: true,
-        sms: false
-      },
-      security: {
-        twoFactorAuth: true,
-        sessionTimeout: 3600,
-        passwordPolicy: 'strong'
-      }
-    };
-
-    res.json({
-      success: true,
-      data: mockSettings
-    });
-  })
-);
-
-// 更新租户设置
-router.put('/:id/settings',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const settings = req.body;
-    
-    logger.info(`Updating tenant settings`, {
-      tenantId: id,
-      settings,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现租户设置服务
-    const updatedSettings = {
-      tenantId: id,
-      ...settings,
-      updatedAt: new Date().toISOString()
-    };
-
-    res.json({
-      success: true,
-      data: updatedSettings,
-      message: 'Settings updated successfully'
-    });
-  })
-);
+  }
+});
 
 export default router; 
