@@ -3,6 +3,7 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import messagesRouter from './routes/messages';
 import systemRouter from './routes/system';
+import backupRouter from './routes/backup';
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -77,6 +78,7 @@ app.get('/health', (req, res) => {
 // 路由集成
 app.use('/api/v1/messages', messagesRouter);
 app.use('/api/v1/system', systemRouter);
+app.use('/api/v1/backup', backupRouter);
 
 // 获取所有租户
 app.get('/api/v1/tenants', (req, res) => {
@@ -391,6 +393,7 @@ app.listen(PORT, () => {
   console.log(`🏢 租户管理: http://localhost:${PORT}/api/v1/tenants`);
   console.log(`💬 消息管理: http://localhost:${PORT}/api/v1/messages`);
   console.log(`⚙️ 系统监控: http://localhost:${PORT}/api/v1/system`);
+  console.log(`💾 备份管理: http://localhost:${PORT}/api/v1/backup`);
 });
 
 export default app; 
