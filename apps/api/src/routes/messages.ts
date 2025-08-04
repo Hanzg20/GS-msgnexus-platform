@@ -1,456 +1,537 @@
-import { Router } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
-import { authMiddleware, requireRole, requireTenant } from '../middleware/auth';
-import { validate } from '../middleware/validation';
-import { messageSchemas } from '../middleware/validation';
-import { logger } from '../utils/logger';
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
-const router = Router();
+const router = express.Router();
+
+// 消息类型定义
+interface Message {
+  id: string;
+  tenantId: string;
+  type: 'sms' | 'email' | 'push' | 'webhook';
+  status: 'pending' | 'sent' | 'delivered' | 'failed' | 'retrying';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  sender: string;
+  recipient: string;
+  subject?: string;
+  content: string;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  deliveredAt?: string;
+  retryCount: number;
+  maxRetries: number;
+  errorMessage?: string;
+}
+
+// 模拟消息数据
+let messages: Message[] = [
+  {
+    id: 'msg-001',
+    tenantId: 'tenant-001',
+    type: 'email',
+    status: 'delivered',
+    priority: 'normal',
+    sender: 'system@msgnexus.com',
+    recipient: 'user1@example.com',
+    subject: '欢迎使用 MsgNexus',
+    content: '感谢您选择我们的消息管理平台！',
+    metadata: { campaignId: 'camp-001', templateId: 'tpl-welcome' },
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-01-15T10:01:30Z',
+    sentAt: '2024-01-15T10:00:30Z',
+    deliveredAt: '2024-01-15T10:01:30Z',
+    retryCount: 0,
+    maxRetries: 3
+  },
+  {
+    id: 'msg-002',
+    tenantId: 'tenant-001',
+    type: 'sms',
+    status: 'sent',
+    priority: 'high',
+    sender: 'MsgNexus',
+    recipient: '+1234567890',
+    content: '您的验证码是：123456，5分钟内有效。',
+    metadata: { verificationCode: '123456', expiresAt: '2024-01-15T10:05:00Z' },
+    createdAt: '2024-01-15T10:02:00Z',
+    updatedAt: '2024-01-15T10:02:15Z',
+    sentAt: '2024-01-15T10:02:15Z',
+    retryCount: 0,
+    maxRetries: 3
+  },
+  {
+    id: 'msg-003',
+    tenantId: 'tenant-002',
+    type: 'push',
+    status: 'failed',
+    priority: 'normal',
+    sender: 'app-notification',
+    recipient: 'device-token-123',
+    subject: '新消息通知',
+    content: '您有一条新的消息',
+    metadata: { deviceId: 'device-123', appVersion: '1.2.0' },
+    createdAt: '2024-01-15T10:03:00Z',
+    updatedAt: '2024-01-15T10:03:45Z',
+    retryCount: 2,
+    maxRetries: 3,
+    errorMessage: '设备令牌无效'
+  },
+  {
+    id: 'msg-004',
+    tenantId: 'tenant-001',
+    type: 'webhook',
+    status: 'pending',
+    priority: 'low',
+    sender: 'system',
+    recipient: 'https://api.example.com/webhook',
+    content: JSON.stringify({ event: 'user_registered', userId: 'user-123' }),
+    metadata: { eventType: 'user_registered', webhookId: 'webhook-001' },
+    createdAt: '2024-01-15T10:04:00Z',
+    updatedAt: '2024-01-15T10:04:00Z',
+    retryCount: 0,
+    maxRetries: 3
+  }
+];
 
 // 获取消息列表
-router.get('/',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
-    const { page = 1, limit = 20, conversationId, type, status, startDate, endDate } = req.query;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Fetching messages list`, {
-      page,
-      limit,
-      conversationId,
-      type,
+router.get('/', (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
       status,
+      type,
+      tenantId,
+      priority,
       startDate,
       endDate,
-      tenantId,
-      userId: req.user?.id
-    });
+      search
+    } = req.query;
 
-    // TODO: 实现消息服务
-    const mockMessages = [
-      {
-        id: '1',
-        content: 'Hello world',
-        type: 'text',
-        conversationId: 'conv1',
-        senderId: 'user1',
-        senderName: 'John Doe',
-        status: 'delivered',
-        timestamp: new Date().toISOString(),
-        metadata: {
-          mentions: [],
-          tags: []
-        }
-      },
-      {
-        id: '2',
-        content: 'How are you?',
-        type: 'text',
-        conversationId: 'conv1',
-        senderId: 'user2',
-        senderName: 'Jane Smith',
-        status: 'delivered',
-        timestamp: new Date().toISOString(),
-        metadata: {
-          mentions: [],
-          tags: []
-        }
-      }
-    ];
+    let filteredMessages = [...messages];
+
+    // 按状态过滤
+    if (status) {
+      filteredMessages = filteredMessages.filter(msg => msg.status === status);
+    }
+
+    // 按类型过滤
+    if (type) {
+      filteredMessages = filteredMessages.filter(msg => msg.type === type);
+    }
+
+    // 按租户过滤
+    if (tenantId) {
+      filteredMessages = filteredMessages.filter(msg => msg.tenantId === tenantId);
+    }
+
+    // 按优先级过滤
+    if (priority) {
+      filteredMessages = filteredMessages.filter(msg => msg.priority === priority);
+    }
+
+    // 按日期范围过滤
+    if (startDate || endDate) {
+      filteredMessages = filteredMessages.filter(msg => {
+        const msgDate = new Date(msg.createdAt);
+        if (startDate && msgDate < new Date(startDate as string)) return false;
+        if (endDate && msgDate > new Date(endDate as string)) return false;
+        return true;
+      });
+    }
+
+    // 搜索功能
+    if (search) {
+      const searchTerm = (search as string).toLowerCase();
+      filteredMessages = filteredMessages.filter(msg =>
+        msg.recipient.toLowerCase().includes(searchTerm) ||
+        msg.content.toLowerCase().includes(searchTerm) ||
+        msg.subject?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // 分页
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const startIndex = (pageNum - 1) * limitNum;
+    const endIndex = startIndex + limitNum;
+    const paginatedMessages = filteredMessages.slice(startIndex, endIndex);
 
     res.json({
       success: true,
-      data: mockMessages,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: mockMessages.length,
-        pages: Math.ceil(mockMessages.length / parseInt(limit as string))
+      data: {
+        messages: paginatedMessages,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: filteredMessages.length,
+          totalPages: Math.ceil(filteredMessages.length / limitNum)
+        }
       }
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '获取消息列表失败',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
 
 // 获取单个消息详情
-router.get('/:id',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
+router.get('/:id', (req, res) => {
+  try {
     const { id } = req.params;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Fetching message details`, {
-      messageId: id,
-      tenantId,
-      userId: req.user?.id
-    });
+    const message = messages.find(msg => msg.id === id);
 
-    // TODO: 实现消息服务
-    const mockMessage = {
-      id,
-      content: 'Hello world',
-      type: 'text',
-      conversationId: 'conv1',
-      senderId: 'user1',
-      senderName: 'John Doe',
-      status: 'delivered',
-      readBy: ['user2', 'user3'],
-      replyTo: null,
-      metadata: {
-        mentions: [],
-        tags: [],
-        attachments: []
-      },
-      timestamp: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        error: '消息不存在'
+      });
+    }
 
     res.json({
       success: true,
-      data: mockMessage
+      data: message
     });
-  })
-);
-
-// 发送新消息
-router.post('/',
-  authMiddleware,
-  requireTenant,
-  validate(messageSchemas.createMessage),
-  asyncHandler(async (req, res) => {
-    const messageData = req.body;
-    const senderId = req.user?.id;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Sending new message`, {
-      messageData,
-      senderId,
-      tenantId
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '获取消息详情失败',
+      details: error instanceof Error ? error.message : '未知错误'
     });
+  }
+});
 
-    // TODO: 实现消息服务
-    const newMessage = {
-      id: '3',
-      ...messageData,
-      senderId,
+// 创建新消息
+router.post('/', (req, res) => {
+  try {
+    const {
       tenantId,
-      status: 'sent',
-      timestamp: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      type,
+      priority = 'normal',
+      sender,
+      recipient,
+      subject,
+      content,
+      metadata,
+      maxRetries = 3
+    } = req.body;
+
+    // 验证必填字段
+    if (!tenantId || !type || !sender || !recipient || !content) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少必填字段'
+      });
+    }
+
+    // 验证消息类型
+    const validTypes = ['sms', 'email', 'push', 'webhook'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        error: '无效的消息类型'
+      });
+    }
+
+    // 验证优先级
+    const validPriorities = ['low', 'normal', 'high', 'urgent'];
+    if (!validPriorities.includes(priority)) {
+      return res.status(400).json({
+        success: false,
+        error: '无效的优先级'
+      });
+    }
+
+    const now = new Date().toISOString();
+    const newMessage: Message = {
+      id: `msg-${uuidv4().substring(0, 8)}`,
+      tenantId,
+      type,
+      status: 'pending',
+      priority,
+      sender,
+      recipient,
+      subject,
+      content,
+      metadata,
+      createdAt: now,
+      updatedAt: now,
+      retryCount: 0,
+      maxRetries
     };
 
-    // TODO: 通过 WebSocket 广播消息到对话房间
+    messages.push(newMessage);
 
     res.status(201).json({
       success: true,
-      data: newMessage,
-      message: 'Message sent successfully'
+      data: newMessage
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '创建消息失败',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
 
-// 更新消息
-router.put('/:id',
-  authMiddleware,
-  requireTenant,
-  validate(messageSchemas.updateMessage),
-  asyncHandler(async (req, res) => {
+// 更新消息状态
+router.patch('/:id/status', (req, res) => {
+  try {
     const { id } = req.params;
-    const updateData = req.body;
-    const userId = req.user?.id;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Updating message`, {
-      messageId: id,
-      updateData,
-      userId,
-      tenantId
-    });
+    const { status, errorMessage } = req.body;
 
-    // TODO: 实现消息服务
-    // 检查用户是否有权限编辑此消息
-    const updatedMessage = {
-      id,
-      content: 'Updated message content',
-      type: 'text',
-      conversationId: 'conv1',
-      senderId: 'user1',
-      status: 'delivered',
-      ...updateData,
-      updatedAt: new Date().toISOString()
-    };
+    const messageIndex = messages.findIndex(msg => msg.id === id);
+    if (messageIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: '消息不存在'
+      });
+    }
+
+    const validStatuses = ['pending', 'sent', 'delivered', 'failed', 'retrying'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: '无效的状态'
+      });
+    }
+
+    const message = messages[messageIndex];
+    message.status = status;
+    message.updatedAt = new Date().toISOString();
+
+    // 更新相关时间戳
+    if (status === 'sent' && !message.sentAt) {
+      message.sentAt = new Date().toISOString();
+    } else if (status === 'delivered' && !message.deliveredAt) {
+      message.deliveredAt = new Date().toISOString();
+    }
+
+    if (errorMessage) {
+      message.errorMessage = errorMessage;
+    }
 
     res.json({
       success: true,
-      data: updatedMessage,
-      message: 'Message updated successfully'
+      data: message
     });
-  })
-);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '更新消息状态失败',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
+// 重试失败的消息
+router.post('/:id/retry', (req, res) => {
+  try {
+    const { id } = req.params;
+    const messageIndex = messages.findIndex(msg => msg.id === id);
+
+    if (messageIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: '消息不存在'
+      });
+    }
+
+    const message = messages[messageIndex];
+
+    if (message.status !== 'failed') {
+      return res.status(400).json({
+        success: false,
+        error: '只能重试失败的消息'
+      });
+    }
+
+    if (message.retryCount >= message.maxRetries) {
+      return res.status(400).json({
+        success: false,
+        error: '已达到最大重试次数'
+      });
+    }
+
+    message.status = 'retrying';
+    message.retryCount += 1;
+    message.updatedAt = new Date().toISOString();
+    message.errorMessage = undefined;
+
+    res.json({
+      success: true,
+      data: message
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '重试消息失败',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
 
 // 删除消息
-router.delete('/:id',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
+router.delete('/:id', (req, res) => {
+  try {
     const { id } = req.params;
-    const userId = req.user?.id;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Deleting message`, {
-      messageId: id,
-      userId,
-      tenantId
-    });
+    const messageIndex = messages.findIndex(msg => msg.id === id);
 
-    // TODO: 实现消息服务
-    // 检查用户是否有权限删除此消息
+    if (messageIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: '消息不存在'
+      });
+    }
+
+    messages.splice(messageIndex, 1);
 
     res.json({
       success: true,
-      message: 'Message deleted successfully'
+      message: '消息删除成功'
     });
-  })
-);
-
-// 标记消息为已读
-router.post('/:id/read',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const userId = req.user?.id;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Marking message as read`, {
-      messageId: id,
-      userId,
-      tenantId
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '删除消息失败',
+      details: error instanceof Error ? error.message : '未知错误'
     });
-
-    // TODO: 实现消息已读服务
-    // 更新消息的已读状态
-
-    res.json({
-      success: true,
-      message: 'Message marked as read'
-    });
-  })
-);
+  }
+});
 
 // 获取消息统计信息
-router.get('/stats/overview',
-  authMiddleware,
-  requireRole(['admin', 'super_admin']),
-  asyncHandler(async (req, res) => {
-    const { period = '30d', tenantId } = req.query;
-    
-    logger.info(`Fetching message stats overview`, {
-      period,
-      tenantId,
-      userId: req.user?.id
-    });
+router.get('/stats/overview', (req, res) => {
+  try {
+    const { tenantId, startDate, endDate } = req.query;
 
-    // TODO: 实现消息统计服务
-    const mockStats = {
-      period,
-      tenantId,
-      total: 50000,
-      sent: 48000,
-      delivered: 47500,
-      failed: 500,
-      deliveryRate: 98.96,
-      avgResponseTime: 2.5,
-      topSenders: [
-        { userId: 'user1', count: 1500, name: 'John Doe' },
-        { userId: 'user2', count: 1200, name: 'Jane Smith' }
-      ],
-      messageTypes: {
-        text: 45000,
-        image: 3000,
-        file: 1500,
-        system: 500
-      },
-      hourlyDistribution: [
-        { hour: 9, count: 5000 },
-        { hour: 10, count: 6000 },
-        { hour: 11, count: 5500 }
-      ]
-    };
+    let filteredMessages = [...messages];
 
-    res.json({
-      success: true,
-      data: mockStats
-    });
-  })
-);
+    // 按租户过滤
+    if (tenantId) {
+      filteredMessages = filteredMessages.filter(msg => msg.tenantId === tenantId);
+    }
 
-// 获取对话消息历史
-router.get('/conversation/:conversationId',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
-    const { conversationId } = req.params;
-    const { page = 1, limit = 50, before, after } = req.query;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Fetching conversation messages`, {
-      conversationId,
-      page,
-      limit,
-      before,
-      after,
-      tenantId,
-      userId: req.user?.id
-    });
+    // 按日期范围过滤
+    if (startDate || endDate) {
+      filteredMessages = filteredMessages.filter(msg => {
+        const msgDate = new Date(msg.createdAt);
+        if (startDate && msgDate < new Date(startDate as string)) return false;
+        if (endDate && msgDate > new Date(endDate as string)) return false;
+        return true;
+      });
+    }
 
-    // TODO: 实现对话消息服务
-    const mockMessages = [
-      {
-        id: '1',
-        content: 'Hello everyone!',
-        type: 'text',
-        senderId: 'user1',
-        senderName: 'John Doe',
-        status: 'delivered',
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: '2',
-        content: 'Hi John!',
-        type: 'text',
-        senderId: 'user2',
-        senderName: 'Jane Smith',
-        status: 'delivered',
-        timestamp: new Date().toISOString()
-      }
-    ];
+    // 计算统计数据
+    const total = filteredMessages.length;
+    const byStatus = filteredMessages.reduce((acc, msg) => {
+      acc[msg.status] = (acc[msg.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const byType = filteredMessages.reduce((acc, msg) => {
+      acc[msg.type] = (acc[msg.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const byPriority = filteredMessages.reduce((acc, msg) => {
+      acc[msg.priority] = (acc[msg.priority] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // 计算成功率
+    const successful = (byStatus.delivered || 0) + (byStatus.sent || 0);
+    const successRate = total > 0 ? (successful / total * 100).toFixed(2) : '0.00';
+
+    // 计算平均延迟
+    const deliveredMessages = filteredMessages.filter(msg => msg.deliveredAt);
+    const totalDelay = deliveredMessages.reduce((sum, msg) => {
+      const sentTime = new Date(msg.sentAt || msg.createdAt).getTime();
+      const deliveredTime = new Date(msg.deliveredAt!).getTime();
+      return sum + (deliveredTime - sentTime);
+    }, 0);
+    const avgDelay = deliveredMessages.length > 0 ? (totalDelay / deliveredMessages.length / 1000).toFixed(2) : '0.00';
 
     res.json({
       success: true,
-      data: mockMessages,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: mockMessages.length,
-        pages: Math.ceil(mockMessages.length / parseInt(limit as string))
+      data: {
+        total,
+        byStatus,
+        byType,
+        byPriority,
+        successRate: parseFloat(successRate),
+        avgDelaySeconds: parseFloat(avgDelay),
+        failedCount: byStatus.failed || 0,
+        retryingCount: byStatus.retrying || 0
       }
     });
-  })
-);
-
-// 搜索消息
-router.get('/search',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
-    const { q, conversationId, senderId, type, startDate, endDate, page = 1, limit = 20 } = req.query;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Searching messages`, {
-      q,
-      conversationId,
-      senderId,
-      type,
-      startDate,
-      endDate,
-      page,
-      limit,
-      tenantId,
-      userId: req.user?.id
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '获取统计信息失败',
+      details: error instanceof Error ? error.message : '未知错误'
     });
+  }
+});
 
-    // TODO: 实现消息搜索服务
-    const mockSearchResults = [
-      {
-        id: '1',
-        content: 'Hello world',
-        type: 'text',
-        conversationId: 'conv1',
-        senderId: 'user1',
-        senderName: 'John Doe',
-        timestamp: new Date().toISOString(),
-        highlights: ['Hello <em>world</em>']
-      }
-    ];
+// 获取消息趋势数据
+router.get('/stats/trends', (req, res) => {
+  try {
+    const { tenantId, days = 7 } = req.query;
+    const daysNum = parseInt(days as string);
+
+    let filteredMessages = [...messages];
+
+    // 按租户过滤
+    if (tenantId) {
+      filteredMessages = filteredMessages.filter(msg => msg.tenantId === tenantId);
+    }
+
+    // 生成日期范围
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysNum);
+
+    // 按日期分组统计
+    const trends = [];
+    for (let i = 0; i < daysNum; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      const dayMessages = filteredMessages.filter(msg => {
+        const msgDate = new Date(msg.createdAt).toISOString().split('T')[0];
+        return msgDate === dateStr;
+      });
+
+      const successful = dayMessages.filter(msg => 
+        msg.status === 'delivered' || msg.status === 'sent'
+      ).length;
+
+      trends.push({
+        date: dateStr,
+        total: dayMessages.length,
+        successful,
+        failed: dayMessages.filter(msg => msg.status === 'failed').length,
+        successRate: dayMessages.length > 0 ? (successful / dayMessages.length * 100).toFixed(2) : '0.00'
+      });
+    }
 
     res.json({
       success: true,
-      data: mockSearchResults,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: mockSearchResults.length,
-        pages: Math.ceil(mockSearchResults.length / parseInt(limit as string))
-      }
+      data: trends
     });
-  })
-);
-
-// 获取消息附件
-router.get('/:id/attachments',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Fetching message attachments`, {
-      messageId: id,
-      tenantId,
-      userId: req.user?.id
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '获取趋势数据失败',
+      details: error instanceof Error ? error.message : '未知错误'
     });
-
-    // TODO: 实现消息附件服务
-    const mockAttachments = [
-      {
-        id: 'att1',
-        filename: 'document.pdf',
-        url: 'https://example.com/files/document.pdf',
-        size: 1024000,
-        mimeType: 'application/pdf',
-        uploadedAt: new Date().toISOString()
-      }
-    ];
-
-    res.json({
-      success: true,
-      data: mockAttachments
-    });
-  })
-);
-
-// 上传消息附件
-router.post('/:id/attachments',
-  authMiddleware,
-  requireTenant,
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const tenantId = req.user?.tenantId;
-    
-    logger.info(`Uploading message attachment`, {
-      messageId: id,
-      tenantId,
-      userId: req.user?.id
-    });
-
-    // TODO: 实现文件上传服务
-    const newAttachment = {
-      id: 'att2',
-      filename: 'image.jpg',
-      url: 'https://example.com/files/image.jpg',
-      size: 512000,
-      mimeType: 'image/jpeg',
-      uploadedAt: new Date().toISOString()
-    };
-
-    res.status(201).json({
-      success: true,
-      data: newAttachment,
-      message: 'Attachment uploaded successfully'
-    });
-  })
-);
+  }
+});
 
 export default router; 

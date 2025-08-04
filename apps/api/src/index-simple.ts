@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import messagesRouter from './routes/messages';
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -71,6 +72,9 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// 路由集成
+app.use('/api/v1/messages', messagesRouter);
 
 // 获取所有租户
 app.get('/api/v1/tenants', (req, res) => {
@@ -383,6 +387,7 @@ app.listen(PORT, () => {
   console.log(`🚀 API 服务器运行在端口 ${PORT}`);
   console.log(`📊 健康检查: http://localhost:${PORT}/health`);
   console.log(`🏢 租户管理: http://localhost:${PORT}/api/v1/tenants`);
+  console.log(`💬 消息管理: http://localhost:${PORT}/api/v1/messages`);
 });
 
 export default app; 
