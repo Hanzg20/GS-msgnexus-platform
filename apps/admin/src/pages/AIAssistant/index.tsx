@@ -1,339 +1,300 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, Input, Button, Avatar, Typography, Space, Tag, Spin, message } from 'antd';
-import { SendOutlined, RobotOutlined, UserOutlined, LoadingOutlined } from '@ant-design/icons';
-import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-
-const { TextArea } = Input;
-const { Title, Text } = Typography;
+import React, { useState } from 'react';
+import { Send, Bot, User, Loader2, Settings, MessageSquare, Brain, Zap } from 'lucide-react';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 
 interface Message {
   id: string;
-  type: 'user' | 'ai';
+  type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  loading?: boolean;
 }
 
 const AIAssistant: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      type: 'ai',
-      content: '你好！我是 GoldSky MessageCore 的 AI 助手。我可以帮助您：\n\n• 📊 分析系统数据和趋势\n• 🔍 诊断问题和异常\n• 💡 提供优化建议\n• 📈 生成报告和预测\n\n请告诉我您需要什么帮助？',
-      timestamp: new Date(),
-    },
+      type: 'assistant',
+      content: '你好！我是 MsgNexus AI 助手，有什么可以帮助你的吗？',
+      timestamp: new Date()
+    }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: inputValue,
-      timestamp: new Date(),
+      timestamp: new Date()
     };
 
-    const aiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'ai',
-      content: '',
-      timestamp: new Date(),
-      loading: true,
-    };
-
-    setMessages(prev => [...prev, userMessage, aiMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
 
-    try {
-      // 模拟AI响应
-      const response = await simulateAIResponse(inputValue);
-      
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === aiMessage.id 
-            ? { ...msg, content: response, loading: false }
-            : msg
-        )
-      );
-    } catch (error) {
-      message.error('AI 响应失败，请重试');
-      setMessages(prev => prev.filter(msg => msg.id !== aiMessage.id));
-    } finally {
+    // 模拟AI响应
+    setTimeout(() => {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: `我理解你的问题："${inputValue}"。让我为你提供一些建议...`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, assistantMessage]);
       setIsLoading(false);
-    }
-  };
-
-  const simulateAIResponse = async (userInput: string): Promise<string> => {
-    // 模拟AI处理时间
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-
-    const responses = {
-      '系统状态': `## 系统状态分析 📊
-
-**当前系统运行状况：**
-- ✅ 服务状态：正常
-- 📈 CPU 使用率：45%
-- 💾 内存使用率：78%
-- 🌐 网络延迟：12ms
-- 📨 消息吞吐量：1,234/分钟
-
-**建议：**
-- 内存使用率较高，建议检查缓存策略
-- 考虑增加服务器资源以应对增长需求`,
-      
-      '租户分析': `## 租户数据分析 🏢
-
-**租户统计：**
-- 总租户数：156
-- 活跃租户：142 (91%)
-- 新增租户（本月）：23
-- 流失租户（本月）：5
-
-**热门功能：**
-1. 实时消息推送 (89%)
-2. 消息历史查询 (76%)
-3. 用户管理 (65%)
-4. API 集成 (58%)
-
-**增长趋势：**
-- 月增长率：15.3%
-- 用户活跃度：78.2%
-- 消息量增长：23.1%`,
-      
-      '性能优化': `## 性能优化建议 ⚡
-
-**当前性能指标：**
-- 🚀 API 响应时间：平均 45ms
-- 📊 数据库查询：平均 12ms
-- 🔄 缓存命中率：87%
-- 📨 消息延迟：平均 8ms
-
-**优化建议：**
-1. **数据库优化**
-   - 添加消息表索引
-   - 优化查询语句
-   - 考虑读写分离
-
-2. **缓存策略**
-   - 增加 Redis 集群
-   - 优化缓存策略
-   - 预热热点数据
-
-3. **网络优化**
-   - 启用 CDN
-   - 压缩传输数据
-   - 优化 WebSocket 连接`,
-      
-      '错误诊断': `## 错误诊断报告 🔍
-
-**最近错误统计：**
-- 总错误数：23 (过去24小时)
-- 错误率：0.02%
-- 主要错误类型：
-  - 网络超时 (45%)
-  - 数据库连接失败 (32%)
-  - 认证失败 (23%)
-
-**解决方案：**
-1. **网络超时**
-   - 增加超时时间
-   - 添加重试机制
-   - 优化网络配置
-
-2. **数据库连接**
-   - 检查连接池配置
-   - 监控数据库性能
-   - 添加连接重试
-
-3. **认证问题**
-   - 检查 JWT 配置
-   - 验证用户权限
-   - 更新认证策略`,
-    };
-
-    // 根据用户输入匹配响应
-    for (const [key, response] of Object.entries(responses)) {
-      if (userInput.includes(key)) {
-        return response;
-      }
-    }
-
-    // 默认响应
-    return `## AI 助手回复 🤖
-
-我理解您的问题："${userInput}"
-
-**我的建议：**
-- 请提供更具体的信息，我可以为您提供更精确的分析
-- 您可以询问系统状态、租户分析、性能优化或错误诊断
-- 我也可以帮您生成报告或预测趋势
-
-**示例问题：**
-- "分析系统状态"
-- "查看租户数据"
-- "性能优化建议"
-- "错误诊断报告"`;
+    }, 2000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="ai-assistant" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
       {/* 头部 */}
-      <Card 
-        style={{ 
-          marginBottom: 16, 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          border: 'none'
-        }}
-      >
-        <Space align="center">
-          <Avatar 
-            size={40} 
-            icon={<RobotOutlined />} 
-            style={{ backgroundColor: '#fff', color: '#667eea' }}
-          />
+      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <Title level={4} style={{ color: '#fff', margin: 0 }}>
-              AI 智能助手
-            </Title>
-            <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
-              智能分析 · 实时诊断 · 优化建议
-            </Text>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>AI 助手</h1>
+            <p style={{ color: '#6b7280', marginTop: '4px' }}>
+              智能客服和自动化处理助手
+            </p>
           </div>
-        </Space>
-      </Card>
-
-      {/* 消息列表 */}
-      <Card 
-        style={{ 
-          flex: 1, 
-          overflow: 'hidden',
-          background: '#f8f9fa'
-        }}
-        bodyStyle={{ 
-          height: '100%', 
-          padding: 16,
-          overflow: 'auto'
-        }}
-      >
-        <AnimatePresence>
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              style={{ marginBottom: 16 }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'flex-start',
-                justifyContent: msg.type === 'user' ? 'flex-end' : 'flex-start'
-              }}>
-                {msg.type === 'ai' && (
-                  <Avatar 
-                    icon={<RobotOutlined />} 
-                    style={{ backgroundColor: '#1890ff', marginRight: 8 }}
-                  />
-                )}
-                
-                <Card
-                  size="small"
-                  style={{
-                    maxWidth: '70%',
-                    background: msg.type === 'user' ? '#1890ff' : '#fff',
-                    border: msg.type === 'user' ? 'none' : '1px solid #e8e8e8',
-                  }}
-                  bodyStyle={{ padding: 12 }}
-                >
-                  {msg.loading ? (
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <Spin indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} />
-                      <Text style={{ marginLeft: 8, color: '#666' }}>AI 正在思考...</Text>
-                    </div>
-                  ) : (
-                    <div>
-                      {msg.type === 'ai' ? (
-                        <ReactMarkdown 
-                          components={{
-                            h2: ({children}) => <Title level={4} style={{margin: '8px 0'}}>{children}</Title>,
-                            p: ({children}) => <Text style={{color: '#333'}}>{children}</Text>,
-                            ul: ({children}) => <ul style={{margin: '8px 0', paddingLeft: 20}}>{children}</ul>,
-                            li: ({children}) => <li style={{margin: '4px 0'}}>{children}</li>,
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-                      ) : (
-                        <Text style={{ color: '#fff' }}>{msg.content}</Text>
-                      )}
-                    </div>
-                  )}
-                </Card>
-
-                {msg.type === 'user' && (
-                  <Avatar 
-                    icon={<UserOutlined />} 
-                    style={{ backgroundColor: '#52c41a', marginLeft: 8 }}
-                  />
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        <div ref={messagesEndRef} />
-      </Card>
-
-      {/* 输入区域 */}
-      <Card style={{ marginTop: 16 }}>
-        <Space.Compact style={{ width: '100%' }}>
-          <TextArea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="输入您的问题，按 Enter 发送，Shift+Enter 换行..."
-            autoSize={{ minRows: 2, maxRows: 4 }}
-            style={{ flex: 1 }}
-            disabled={isLoading}
-          />
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            onClick={handleSend}
-            loading={isLoading}
-            style={{ height: 'auto' }}
-          >
-            发送
-          </Button>
-        </Space.Compact>
-        
-        <div style={{ marginTop: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            提示：您可以询问系统状态、租户分析、性能优化或错误诊断等问题
-          </Text>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Button variant="ghost">
+              <Settings style={{ width: '16px', height: '16px' }} />
+              设置
+            </Button>
+            <Button variant="primary">
+              <Brain style={{ width: '16px', height: '16px' }} />
+              训练模型
+            </Button>
+          </div>
         </div>
-      </Card>
+      </div>
+
+      <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', height: 'calc(100vh - 120px)' }}>
+        {/* 聊天区域 */}
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Card style={{ flex: 1, display: 'flex', flexDirection: 'column', marginBottom: '16px' }}>
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto', 
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start',
+                    marginBottom: '8px'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    maxWidth: '70%'
+                  }}>
+                    {message.type === 'assistant' && (
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: '#3b82f6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        <Bot style={{ width: '16px', height: '16px', color: 'white' }} />
+                      </div>
+                    )}
+                    <div style={{
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      backgroundColor: message.type === 'user' ? '#3b82f6' : '#f3f4f6',
+                      color: message.type === 'user' ? 'white' : '#374151',
+                      fontSize: '14px',
+                      lineHeight: '1.5'
+                    }}>
+                      {message.content}
+                    </div>
+                    {message.type === 'user' && (
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: '#10b981',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        <User style={{ width: '16px', height: '16px', color: 'white' }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px'
+                  }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: '#3b82f6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Bot style={{ width: '16px', height: '16px', color: 'white' }} />
+                    </div>
+                    <div style={{
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      backgroundColor: '#f3f4f6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                      <span style={{ color: '#6b7280' }}>正在思考...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* 输入区域 */}
+            <div style={{ 
+              borderTop: '1px solid #e5e7eb', 
+              padding: '16px',
+              display: 'flex',
+              gap: '12px'
+            }}>
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="输入你的问题..."
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  resize: 'none',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  minHeight: '44px',
+                  maxHeight: '120px'
+                }}
+              />
+              <Button
+                variant="primary"
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+              >
+                <Send style={{ width: '16px', height: '16px' }} />
+              </Button>
+            </div>
+          </Card>
+        </div>
+
+        {/* 侧边栏 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* 快速操作 */}
+          <Card>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+              快速操作
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setInputValue('如何配置消息推送？')}
+              >
+                <MessageSquare style={{ width: '14px', height: '14px' }} />
+                消息推送配置
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setInputValue('系统性能优化建议')}
+              >
+                <Zap style={{ width: '14px', height: '14px' }} />
+                性能优化
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setInputValue('用户权限管理说明')}
+              >
+                <Settings style={{ width: '14px', height: '14px' }} />
+                权限管理
+              </Button>
+            </div>
+          </Card>
+
+          {/* 统计信息 */}
+          <Card>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+              对话统计
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>今日对话</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>24</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>平均响应时间</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>1.2s</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>满意度</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>98%</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* 模型信息 */}
+          <Card>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+              模型信息
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>模型版本</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>v2.1.0</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>训练数据</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>10K+</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>准确率</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>95.8%</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

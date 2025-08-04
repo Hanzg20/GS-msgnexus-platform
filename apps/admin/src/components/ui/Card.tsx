@@ -1,55 +1,43 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { clsx } from 'clsx';
 
 interface CardProps {
   children: React.ReactNode;
   className?: string;
-  hover?: boolean;
-  padding?: 'sm' | 'md' | 'lg';
-  shadow?: 'sm' | 'md' | 'lg';
+  style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
-const Card: React.FC<CardProps> = ({
-  children,
-  className,
-  hover = true,
-  padding = 'md',
-  shadow = 'md',
-}) => {
-  const paddingClasses = {
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
+const Card: React.FC<CardProps> = ({ children, className = '', style = {}, onClick }) => {
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+    padding: '16px',
+    transition: 'box-shadow 0.2s ease-in-out',
+    ...style
   };
 
-  const shadowClasses = {
-    sm: 'shadow-soft',
-    md: 'shadow-medium',
-    lg: 'shadow-large',
-  };
-
-  const cardClasses = clsx(
-    'bg-white rounded-xl border border-gray-100',
-    paddingClasses[padding],
-    shadowClasses[shadow],
-    hover && 'hover:shadow-lg transition-shadow duration-300',
-    className
-  );
-
-  if (hover) {
-    return (
-      <motion.div
-        whileHover={{ y: -2 }}
-        className={cardClasses}
-      >
-        {children}
-      </motion.div>
-    );
+  if (onClick) {
+    cardStyle.cursor = 'pointer';
+    cardStyle.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
   }
 
   return (
-    <div className={cardClasses}>
+    <div 
+      className={className}
+      style={cardStyle}
+      onClick={onClick}
+      onMouseEnter={onClick ? () => {
+        if (cardStyle) {
+          cardStyle.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+        }
+      } : undefined}
+      onMouseLeave={onClick ? () => {
+        if (cardStyle) {
+          cardStyle.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+        }
+      } : undefined}
+    >
       {children}
     </div>
   );

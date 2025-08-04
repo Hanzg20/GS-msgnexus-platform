@@ -1,366 +1,526 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Switch, Button, Select, Space, message, Divider, Row, Col } from 'antd';
 import { 
-  SettingOutlined, 
-  SecurityScanOutlined, 
-  ThunderboltOutlined,
-  DatabaseOutlined,
-  CloudOutlined,
-  BellOutlined
-} from '@ant-design/icons';
-import { motion } from 'framer-motion';
-
-const { Option } = Select;
-const { TextArea } = Input;
+  Settings as SettingsIcon, 
+  Shield, 
+  Bell, 
+  Database, 
+  Globe, 
+  Users, 
+  Key, 
+  Save,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle,
+  Info,
+  Moon,
+  Sun,
+  Monitor,
+  Wifi,
+  HardDrive,
+  Server
+} from 'lucide-react';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 
 const Settings: React.FC = () => {
-  const [form] = Form.useForm();
-  const [aiForm] = Form.useForm();
-  const [securityForm] = Form.useForm();
-
+  const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState({
-    system: {
-      appName: 'GoldSky MessageCore',
-      version: '1.0.0',
+    general: {
+      siteName: 'MsgNexus',
+      siteDescription: '企业级消息管理平台',
       timezone: 'Asia/Shanghai',
       language: 'zh-CN',
-      debugMode: false,
-    },
-    ai: {
-      enabled: true,
-      model: 'gpt-4',
-      apiKey: 'sk-...',
-      maxTokens: 2000,
-      temperature: 0.7,
+      theme: 'light'
     },
     security: {
-      enableSSL: true,
-      sessionTimeout: 3600,
-      maxLoginAttempts: 5,
-      enable2FA: false,
+      enableTwoFactor: true,
+      sessionTimeout: 30,
       passwordPolicy: 'strong',
+      enableAuditLog: true
     },
+    notifications: {
+      emailNotifications: true,
+      pushNotifications: true,
+      systemAlerts: true,
+      weeklyReports: false
+    },
+    system: {
+      maxFileSize: 10,
+      enableBackup: true,
+      backupFrequency: 'daily',
+      enableMonitoring: true
+    }
   });
 
-  const handleSystemSave = async () => {
-    try {
-      const values = await form.validateFields();
-      setSettings(prev => ({
-        ...prev,
-        system: { ...prev.system, ...values },
-      }));
-      message.success('系统设置保存成功');
-    } catch (error) {
-      console.error('表单验证失败:', error);
-    }
-  };
-
-  const handleAISave = async () => {
-    try {
-      const values = await aiForm.validateFields();
-      setSettings(prev => ({
-        ...prev,
-        ai: { ...prev.ai, ...values },
-      }));
-      message.success('AI 设置保存成功');
-    } catch (error) {
-      console.error('表单验证失败:', error);
-    }
-  };
-
-  const handleSecuritySave = async () => {
-    try {
-      const values = await securityForm.validateFields();
-      setSettings(prev => ({
-        ...prev,
-        security: { ...prev.security, ...values },
-      }));
-      message.success('安全设置保存成功');
-    } catch (error) {
-      console.error('表单验证失败:', error);
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1
+  const handleSettingChange = (category: string, key: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category as keyof typeof prev],
+        [key]: value
       }
-    }
+    }));
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+  const saveSettings = () => {
+    // 模拟保存设置
+    console.log('保存设置:', settings);
+    alert('设置已保存');
   };
+
+  const tabs = [
+    { key: 'general', label: '常规设置', icon: <SettingsIcon style={{ width: '16px', height: '16px' }} /> },
+    { key: 'security', label: '安全设置', icon: <Shield style={{ width: '16px', height: '16px' }} /> },
+    { key: 'notifications', label: '通知设置', icon: <Bell style={{ width: '16px', height: '16px' }} /> },
+    { key: 'system', label: '系统设置', icon: <Database style={{ width: '16px', height: '16px' }} /> }
+  ];
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>
-          系统设置
-        </h1>
-        <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          系统配置 · AI 设置 · 安全策略
-        </p>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+      {/* 头部 */}
+      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>系统设置</h1>
+            <p style={{ color: '#6b7280', marginTop: '4px' }}>
+              管理系统配置和个性化设置
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Button variant="ghost">
+              <RefreshCw style={{ width: '16px', height: '16px' }} />
+              重置
+            </Button>
+            <Button variant="primary" onClick={saveSettings}>
+              <Save style={{ width: '16px', height: '16px' }} />
+              保存设置
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Row gutter={[16, 16]}>
-        {/* 系统设置 */}
-        <Col xs={24} lg={12}>
-          <motion.div variants={itemVariants}>
-            <Card
-              title={
-                <Space>
-                  <SettingOutlined />
-                  系统设置
-                </Space>
-              }
-            >
-              <Form
-                form={form}
-                layout="vertical"
-                initialValues={settings.system}
-              >
-                <Form.Item
-                  name="appName"
-                  label="应用名称"
-                  rules={[{ required: true, message: '请输入应用名称' }]}
-                >
-                  <Input placeholder="请输入应用名称" />
-                </Form.Item>
-
-                <Form.Item
-                  name="version"
-                  label="版本号"
-                >
-                  <Input placeholder="版本号" disabled />
-                </Form.Item>
-
-                <Form.Item
-                  name="timezone"
-                  label="时区"
-                  rules={[{ required: true, message: '请选择时区' }]}
-                >
-                  <Select placeholder="请选择时区">
-                    <Option value="Asia/Shanghai">Asia/Shanghai (UTC+8)</Option>
-                    <Option value="America/New_York">America/New_York (UTC-5)</Option>
-                    <Option value="Europe/London">Europe/London (UTC+0)</Option>
-                    <Option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="language"
-                  label="语言"
-                  rules={[{ required: true, message: '请选择语言' }]}
-                >
-                  <Select placeholder="请选择语言">
-                    <Option value="zh-CN">简体中文</Option>
-                    <Option value="en-US">English</Option>
-                    <Option value="ja-JP">日本語</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="debugMode"
-                  label="调试模式"
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
-
-                <Form.Item>
-                  <Button type="primary" onClick={handleSystemSave}>
-                    保存系统设置
-                  </Button>
-                </Form.Item>
-              </Form>
-            </Card>
-          </motion.div>
-        </Col>
-
-        {/* AI 设置 */}
-        <Col xs={24} lg={12}>
-          <motion.div variants={itemVariants}>
-            <Card
-              title={
-                <Space>
-                  <ThunderboltOutlined />
-                  AI 设置
-                </Space>
-              }
-            >
-              <Form
-                form={aiForm}
-                layout="vertical"
-                initialValues={settings.ai}
-              >
-                <Form.Item
-                  name="enabled"
-                  label="启用 AI 功能"
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
-
-                <Form.Item
-                  name="model"
-                  label="AI 模型"
-                  rules={[{ required: true, message: '请选择 AI 模型' }]}
-                >
-                  <Select placeholder="请选择 AI 模型">
-                    <Option value="gpt-4">GPT-4</Option>
-                    <Option value="gpt-3.5-turbo">GPT-3.5 Turbo</Option>
-                    <Option value="claude-3">Claude-3</Option>
-                    <Option value="custom">自定义模型</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="apiKey"
-                  label="API 密钥"
-                  rules={[{ required: true, message: '请输入 API 密钥' }]}
-                >
-                  <Input.Password placeholder="请输入 API 密钥" />
-                </Form.Item>
-
-                <Form.Item
-                  name="maxTokens"
-                  label="最大 Token 数"
-                  rules={[{ required: true, message: '请输入最大 Token 数' }]}
-                >
-                  <Input type="number" placeholder="请输入最大 Token 数" />
-                </Form.Item>
-
-                <Form.Item
-                  name="temperature"
-                  label="温度 (创造性)"
-                  rules={[{ required: true, message: '请输入温度值' }]}
-                >
-                  <Input type="number" step="0.1" min="0" max="2" placeholder="0.0-2.0" />
-                </Form.Item>
-
-                <Form.Item>
-                  <Button type="primary" onClick={handleAISave}>
-                    保存 AI 设置
-                  </Button>
-                </Form.Item>
-              </Form>
-            </Card>
-          </motion.div>
-        </Col>
-
-        {/* 安全设置 */}
-        <Col xs={24}>
-          <motion.div variants={itemVariants}>
-            <Card
-              title={
-                <Space>
-                  <SecurityScanOutlined />
-                  安全设置
-                </Space>
-              }
-            >
-              <Row gutter={[16, 16]}>
-                <Col xs={24} lg={12}>
-                  <Form
-                    form={securityForm}
-                    layout="vertical"
-                    initialValues={settings.security}
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '24px' }}>
+          {/* 侧边栏导航 */}
+          <div>
+            <Card>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      border: 'none',
+                      backgroundColor: activeTab === tab.key ? '#3b82f6' : 'transparent',
+                      color: activeTab === tab.key ? 'white' : '#374151',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: activeTab === tab.key ? '500' : '400',
+                      textAlign: 'left',
+                      width: '100%'
+                    }}
                   >
-                    <Form.Item
-                      name="enableSSL"
-                      label="启用 SSL"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="sessionTimeout"
-                      label="会话超时时间 (秒)"
-                      rules={[{ required: true, message: '请输入会话超时时间' }]}
-                    >
-                      <Input type="number" placeholder="请输入会话超时时间" />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="maxLoginAttempts"
-                      label="最大登录尝试次数"
-                      rules={[{ required: true, message: '请输入最大登录尝试次数' }]}
-                    >
-                      <Input type="number" placeholder="请输入最大登录尝试次数" />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="enable2FA"
-                      label="启用双因素认证"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="passwordPolicy"
-                      label="密码策略"
-                      rules={[{ required: true, message: '请选择密码策略' }]}
-                    >
-                      <Select placeholder="请选择密码策略">
-                        <Option value="weak">弱 (仅字母数字)</Option>
-                        <Option value="medium">中等 (字母数字+符号)</Option>
-                        <Option value="strong">强 (大小写字母+数字+符号)</Option>
-                        <Option value="very-strong">很强 (大小写字母+数字+符号+特殊字符)</Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item>
-                      <Button type="primary" onClick={handleSecuritySave}>
-                        保存安全设置
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </Col>
-
-                <Col xs={24} lg={12}>
-                  <Card title="安全状态" size="small">
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <div>
-                        <strong>SSL 状态:</strong> 
-                        <span style={{ color: '#52c41a', marginLeft: 8 }}>✓ 已启用</span>
-                      </div>
-                      <div>
-                        <strong>防火墙状态:</strong> 
-                        <span style={{ color: '#52c41a', marginLeft: 8 }}>✓ 正常运行</span>
-                      </div>
-                      <div>
-                        <strong>数据库加密:</strong> 
-                        <span style={{ color: '#52c41a', marginLeft: 8 }}>✓ 已加密</span>
-                      </div>
-                      <div>
-                        <strong>备份状态:</strong> 
-                        <span style={{ color: '#52c41a', marginLeft: 8 }}>✓ 最近备份: 2小时前</span>
-                      </div>
-                      <div>
-                        <strong>安全评分:</strong> 
-                        <span style={{ color: '#52c41a', marginLeft: 8 }}>95/100</span>
-                      </div>
-                    </Space>
-                  </Card>
-                </Col>
-              </Row>
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </Card>
-          </motion.div>
-        </Col>
-      </Row>
-    </motion.div>
+          </div>
+
+          {/* 设置内容 */}
+          <div>
+            {activeTab === 'general' && (
+              <Card>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '24px' }}>
+                  常规设置
+                </h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                      站点名称
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.general.siteName}
+                      onChange={(e) => handleSettingChange('general', 'siteName', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                      站点描述
+                    </label>
+                    <textarea
+                      value={settings.general.siteDescription}
+                      onChange={(e) => handleSettingChange('general', 'siteDescription', e.target.value)}
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                        时区
+                      </label>
+                      <select
+                        value={settings.general.timezone}
+                        onChange={(e) => handleSettingChange('general', 'timezone', e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="Asia/Shanghai">Asia/Shanghai</option>
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="Europe/London">Europe/London</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                        语言
+                      </label>
+                      <select
+                        value={settings.general.language}
+                        onChange={(e) => handleSettingChange('general', 'language', e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="zh-CN">中文 (简体)</option>
+                        <option value="en-US">English (US)</option>
+                        <option value="ja-JP">日本語</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                      主题
+                    </label>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        onClick={() => handleSettingChange('general', 'theme', 'light')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 16px',
+                          border: `1px solid ${settings.general.theme === 'light' ? '#3b82f6' : '#d1d5db'}`,
+                          backgroundColor: settings.general.theme === 'light' ? '#eff6ff' : 'white',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sun className="w-4 h-4" />
+                        浅色主题
+                      </button>
+                      <button
+                        onClick={() => handleSettingChange('general', 'theme', 'dark')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 16px',
+                          border: `1px solid ${settings.general.theme === 'dark' ? '#3b82f6' : '#d1d5db'}`,
+                          backgroundColor: settings.general.theme === 'dark' ? '#eff6ff' : 'white',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Moon className="w-4 h-4" />
+                        深色主题
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {activeTab === 'security' && (
+              <Card>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '24px' }}>
+                  安全设置
+                </h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        启用双因素认证
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        为账户添加额外的安全保护
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.security.enableTwoFactor}
+                      onChange={(e) => handleSettingChange('security', 'enableTwoFactor', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                      会话超时时间 (分钟)
+                    </label>
+                    <input
+                      type="number"
+                      value={settings.security.sessionTimeout}
+                      onChange={(e) => handleSettingChange('security', 'sessionTimeout', parseInt(e.target.value))}
+                      min="5"
+                      max="480"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                      密码策略
+                    </label>
+                    <select
+                      value={settings.security.passwordPolicy}
+                      onChange={(e) => handleSettingChange('security', 'passwordPolicy', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      <option value="weak">弱 (至少6位)</option>
+                      <option value="medium">中等 (至少8位，包含字母和数字)</option>
+                      <option value="strong">强 (至少12位，包含大小写字母、数字和特殊字符)</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        启用审计日志
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        记录所有用户操作和系统事件
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.security.enableAuditLog}
+                      onChange={(e) => handleSettingChange('security', 'enableAuditLog', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {activeTab === 'notifications' && (
+              <Card>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '24px' }}>
+                  通知设置
+                </h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        邮件通知
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        接收重要事件的邮件通知
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications.emailNotifications}
+                      onChange={(e) => handleSettingChange('notifications', 'emailNotifications', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        推送通知
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        在浏览器中显示实时通知
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications.pushNotifications}
+                      onChange={(e) => handleSettingChange('notifications', 'pushNotifications', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        系统告警
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        接收系统异常和错误告警
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications.systemAlerts}
+                      onChange={(e) => handleSettingChange('notifications', 'systemAlerts', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        周报邮件
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        每周发送系统使用情况报告
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications.weeklyReports}
+                      onChange={(e) => handleSettingChange('notifications', 'weeklyReports', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {activeTab === 'system' && (
+              <Card>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '24px' }}>
+                  系统设置
+                </h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                      最大文件上传大小 (MB)
+                    </label>
+                    <input
+                      type="number"
+                      value={settings.system.maxFileSize}
+                      onChange={(e) => handleSettingChange('system', 'maxFileSize', parseInt(e.target.value))}
+                      min="1"
+                      max="100"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        启用自动备份
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        定期备份系统数据和配置
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.system.enableBackup}
+                      onChange={(e) => handleSettingChange('system', 'enableBackup', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+
+                  {settings.system.enableBackup && (
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                        备份频率
+                      </label>
+                      <select
+                        value={settings.system.backupFrequency}
+                        onChange={(e) => handleSettingChange('system', 'backupFrequency', e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="hourly">每小时</option>
+                        <option value="daily">每天</option>
+                        <option value="weekly">每周</option>
+                        <option value="monthly">每月</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                        启用系统监控
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        监控系统性能和资源使用情况
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.system.enableMonitoring}
+                      onChange={(e) => handleSettingChange('system', 'enableMonitoring', e.target.checked)}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
