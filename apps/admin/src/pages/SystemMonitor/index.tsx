@@ -3,7 +3,7 @@ import {
   Monitor, 
   Cpu, 
   HardDrive, 
-  Memory, 
+  Database, 
   Network, 
   Activity,
   AlertTriangle,
@@ -18,7 +18,6 @@ import {
   Eye,
   Download,
   Server,
-  Database,
   Globe
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
@@ -301,7 +300,7 @@ const SystemMonitor: React.FC = () => {
             <Card>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '40px', height: '40px', backgroundColor: '#f59e0b', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Memory style={{ width: '20px', height: '20px', color: 'white' }} />
+                  <Database style={{ width: '20px', height: '20px', color: 'white' }} />
                 </div>
                 <div>
                   <p style={{ fontSize: '14px', color: '#6b7280' }}>内存使用率</p>

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import messagesRouter from './routes/messages';
 import systemRouter from './routes/system';
 import backupRouter from './routes/backup';
+import usersRouter from './routes/users';
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -79,6 +80,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/messages', messagesRouter);
 app.use('/api/v1/system', systemRouter);
 app.use('/api/v1/backup', backupRouter);
+app.use('/api/v1/users', usersRouter);
 
 // 获取所有租户
 app.get('/api/v1/tenants', (req, res) => {
@@ -394,6 +396,7 @@ app.listen(PORT, () => {
   console.log(`💬 消息管理: http://localhost:${PORT}/api/v1/messages`);
   console.log(`⚙️ 系统监控: http://localhost:${PORT}/api/v1/system`);
   console.log(`💾 备份管理: http://localhost:${PORT}/api/v1/backup`);
+  console.log(`👥 用户权限管理: http://localhost:${PORT}/api/v1/users`);
 });
 
 export default app; 
