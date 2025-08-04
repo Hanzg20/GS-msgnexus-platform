@@ -381,84 +381,86 @@ const MessageMonitor: React.FC = () => {
         </div>
 
         {/* 过滤器和搜索 */}
-        <Card style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', width: '16px', height: '16px' }} />
-              <input
-                type="text"
-                placeholder="搜索消息内容、收件人..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+        <div style={{ marginBottom: '24px' }}>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', width: '16px', height: '16px' }} />
+                <input
+                  type="text"
+                  placeholder="搜索消息内容、收件人..."
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  style={{
+                    width: '100%',
+                    paddingLeft: '40px',
+                    paddingRight: '16px',
+                    paddingTop: '8px',
+                    paddingBottom: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 style={{
-                  width: '100%',
-                  paddingLeft: '40px',
-                  paddingRight: '16px',
-                  paddingTop: '8px',
-                  paddingBottom: '8px',
+                  padding: '8px 12px',
                   border: '1px solid #d1d5db',
                   borderRadius: '8px',
-                  outline: 'none'
+                  outline: 'none',
+                  backgroundColor: 'white'
                 }}
-              />
+              >
+                <option value="">所有状态</option>
+                <option value="pending">待发送</option>
+                <option value="sent">已发送</option>
+                <option value="delivered">已送达</option>
+                <option value="failed">发送失败</option>
+                <option value="retrying">重试中</option>
+              </select>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">所有类型</option>
+                <option value="email">邮件</option>
+                <option value="sms">短信</option>
+                <option value="push">推送</option>
+                <option value="webhook">Webhook</option>
+              </select>
+              <select
+                value={filters.priority}
+                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">所有优先级</option>
+                <option value="low">低</option>
+                <option value="normal">普通</option>
+                <option value="high">高</option>
+                <option value="urgent">紧急</option>
+              </select>
+              <Button variant="ghost" onClick={() => setFilters({ status: '', type: '', priority: '', search: '', startDate: '', endDate: '' })}>
+                清除筛选
+              </Button>
             </div>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                outline: 'none',
-                backgroundColor: 'white'
-              }}
-            >
-              <option value="">所有状态</option>
-              <option value="pending">待发送</option>
-              <option value="sent">已发送</option>
-              <option value="delivered">已送达</option>
-              <option value="failed">发送失败</option>
-              <option value="retrying">重试中</option>
-            </select>
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                outline: 'none',
-                backgroundColor: 'white'
-              }}
-            >
-              <option value="">所有类型</option>
-              <option value="email">邮件</option>
-              <option value="sms">短信</option>
-              <option value="push">推送</option>
-              <option value="webhook">Webhook</option>
-            </select>
-            <select
-              value={filters.priority}
-              onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                outline: 'none',
-                backgroundColor: 'white'
-              }}
-            >
-              <option value="">所有优先级</option>
-              <option value="low">低</option>
-              <option value="normal">普通</option>
-              <option value="high">高</option>
-              <option value="urgent">紧急</option>
-            </select>
-            <Button variant="ghost" onClick={() => setFilters({ status: '', type: '', priority: '', search: '', startDate: '', endDate: '' })}>
-              清除筛选
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
         {/* 消息列表 */}
         <Card>
