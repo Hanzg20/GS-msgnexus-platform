@@ -1,302 +1,271 @@
-import React, { useState } from 'react';
-import { Send, Bot, User, Loader2, Settings, MessageSquare, Brain, Zap } from 'lucide-react';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import AIFloatingAssistant from '../../components/AIFloatingAssistant';
+import { motion } from 'framer-motion';
+import { 
+  Bot, 
+  MessageCircle, 
+  Settings, 
+  HelpCircle, 
+  Zap,
+  Users,
+  BarChart3,
+  Globe
+} from 'lucide-react';
 
-interface Message {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
-const AIAssistant: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
+const AIAssistantPage: React.FC = () => {
+  const [assistants, setAssistants] = useState([
     {
       id: '1',
-      type: 'assistant',
-      content: '你好！我是 MsgNexus AI 助手，有什么可以帮助你的吗？',
-      timestamp: new Date()
+      name: 'AI助手小机器人',
+      description: '智能聊天助手，随时为您服务',
+      status: 'online',
+      position: { x: window.innerWidth - 100, y: window.innerHeight - 100 }
     }
   ]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  const [showAssistant, setShowAssistant] = useState(true);
+  const [assistantConfig, setAssistantConfig] = useState({
+    theme: 'default',
+    language: 'zh-CN',
+    autoReply: true,
+    voiceEnabled: true
+  });
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: inputValue,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-    setIsLoading(true);
-
-    // 模拟AI响应
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: `我理解你的问题："${inputValue}"。让我为你提供一些建议...`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 2000);
+  // 处理助手关闭
+  const handleAssistantClose = (assistantId: string) => {
+    if (assistantId === '1') {
+      setShowAssistant(false);
+    }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+  // 重新显示助手
+  const handleShowAssistant = () => {
+    setShowAssistant(true);
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      {/* 头部 */}
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>AI 助手</h1>
-            <p style={{ color: '#6b7280', marginTop: '4px' }}>
-              智能客服和自动化处理助手
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 relative overflow-hidden">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full opacity-20 animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200 rounded-full opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full opacity-30 animate-pulse" style={{ animationDelay: '4s' }} />
+      </div>
+
+      {/* 主要内容 */}
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* 页面头部 */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6">
+            <Bot className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+            AI助手管理中心
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            智能AI助手为您提供24/7全天候服务，支持多语言对话、语音交互、智能问答等功能
+          </p>
+        </motion.div>
+
+        {/* 功能卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+              <MessageCircle className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">智能对话</h3>
+            <p className="text-gray-600">
+              支持自然语言对话，理解上下文，提供准确、有用的回答
             </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Button variant="ghost">
-              <Settings style={{ width: '16px', height: '16px' }} />
-              设置
-            </Button>
-            <Button variant="primary">
-              <Brain style={{ width: '16px', height: '16px' }} />
-              训练模型
-            </Button>
-          </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+              <Zap className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">实时响应</h3>
+            <p className="text-gray-600">
+              毫秒级响应速度，支持实时语音识别和语音合成
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">多用户支持</h3>
+            <p className="text-gray-600">
+              支持多用户同时使用，个性化设置和对话历史记录
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+              <Globe className="w-6 h-6 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">多语言支持</h3>
+            <p className="text-gray-600">
+              支持中文、英文等多种语言，智能语言切换
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
+              <BarChart3 className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">数据分析</h3>
+            <p className="text-gray-600">
+              智能分析用户行为，提供个性化建议和优化方案
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
+              <Settings className="w-6 h-6 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">智能配置</h3>
+            <p className="text-gray-600">
+              支持自定义配置，根据用户需求调整助手行为
+            </p>
+          </motion.div>
         </div>
+
+        {/* 助手控制面板 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">助手控制</h2>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleShowAssistant}
+                disabled={showAssistant}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  showAssistant
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+              >
+                {showAssistant ? '已显示' : '显示助手'}
+              </button>
+              <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                <Settings className="w-4 h-4 inline mr-2" />
+                设置
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">助手状态</h3>
+              <div className="space-y-3">
+                {assistants.map((assistant) => (
+                  <div key={assistant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        assistant.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+                      }`} />
+                      <div>
+                        <p className="font-medium text-gray-800">{assistant.name}</p>
+                        <p className="text-sm text-gray-500">{assistant.description}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      assistant.status === 'online' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {assistant.status === 'online' ? '在线' : '离线'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">快速操作</h3>
+              <div className="space-y-3">
+                <button className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <MessageCircle className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="font-medium text-gray-800">开始对话</p>
+                      <p className="text-sm text-gray-500">与AI助手进行智能对话</p>
+                    </div>
+                  </div>
+                </button>
+                
+                <button className="w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <HelpCircle className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium text-gray-800">帮助中心</p>
+                      <p className="text-sm text-gray-500">查看使用指南和常见问题</p>
+                    </div>
+                  </div>
+                </button>
+                
+                <button className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <BarChart3 className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-gray-800">使用统计</p>
+                      <p className="text-sm text-gray-500">查看助手使用情况和数据</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', height: 'calc(100vh - 120px)' }}>
-        {/* 聊天区域 */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Card style={{ flex: 1, display: 'flex', flexDirection: 'column', marginBottom: '16px' }}>
-            <div style={{ 
-              flex: 1, 
-              overflowY: 'auto', 
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start',
-                    marginBottom: '8px'
-                  }}
-                >
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px',
-                    maxWidth: '70%'
-                  }}>
-                    {message.type === 'assistant' && (
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        backgroundColor: '#3b82f6',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        <Bot style={{ width: '16px', height: '16px', color: 'white' }} />
-                      </div>
-                    )}
-                    <div style={{
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      backgroundColor: message.type === 'user' ? '#3b82f6' : '#f3f4f6',
-                      color: message.type === 'user' ? 'white' : '#374151',
-                      fontSize: '14px',
-                      lineHeight: '1.5'
-                    }}>
-                      {message.content}
-                    </div>
-                    {message.type === 'user' && (
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        backgroundColor: '#10b981',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        <User style={{ width: '16px', height: '16px', color: 'white' }} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px'
-                  }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: '#3b82f6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Bot style={{ width: '16px', height: '16px', color: 'white' }} />
-                    </div>
-                    <div style={{
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      backgroundColor: '#f3f4f6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                      <span style={{ color: '#6b7280' }}>正在思考...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* 输入区域 */}
-            <div style={{ 
-              borderTop: '1px solid #e5e7eb', 
-              padding: '16px',
-              display: 'flex',
-              gap: '12px'
-            }}>
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="输入你的问题..."
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  resize: 'none',
-                  fontSize: '14px',
-                  lineHeight: '1.5',
-                  minHeight: '44px',
-                  maxHeight: '120px'
-                }}
-              />
-              <Button
-                variant="primary"
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading}
-              >
-                <Send style={{ width: '16px', height: '16px' }} />
-              </Button>
-            </div>
-          </Card>
-        </div>
-
-        {/* 侧边栏 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* 快速操作 */}
-          <Card>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
-              快速操作
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setInputValue('如何配置消息推送？')}
-              >
-                <MessageSquare style={{ width: '14px', height: '14px' }} />
-                消息推送配置
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setInputValue('系统性能优化建议')}
-              >
-                <Zap style={{ width: '14px', height: '14px' }} />
-                性能优化
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setInputValue('用户权限管理说明')}
-              >
-                <Settings style={{ width: '14px', height: '14px' }} />
-                权限管理
-              </Button>
-            </div>
-          </Card>
-
-          {/* 统计信息 */}
-          <Card>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
-              对话统计
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>今日对话</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>24</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>平均响应时间</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>1.2s</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>满意度</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>98%</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* 模型信息 */}
-          <Card>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
-              模型信息
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>模型版本</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>v2.1.0</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>训练数据</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>10K+</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>准确率</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>95.8%</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
+      {/* 悬浮AI助手 */}
+      {showAssistant && (
+        <AIFloatingAssistant
+          position={assistants[0].position}
+          onClose={() => handleAssistantClose('1')}
+        />
+      )}
     </div>
   );
 };
 
-export default AIAssistant; 
+export default AIAssistantPage; 

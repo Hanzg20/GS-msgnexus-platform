@@ -13,9 +13,18 @@ import UserPermissionManager from './components/UserPermissionManager';
 import SystemDiagnostics from './components/SystemDiagnostics';
 import AuditLog from './components/AuditLog';
 import ChatRoom from './components/ChatRoom';
-import AIAssistant from './components/AIAssistant';
+import AIAssistantPage from './pages/AIAssistant';
 import PerformanceMonitor from './components/PerformanceMonitor';
 import SecurityMonitor from './components/SecurityMonitor';
+import { safeRender, safeRenderArray, safeRenderMenuItem } from './utils/safeRender';
+
+// 定义菜单项类型
+interface MenuItem {
+  key: string;
+  label: string;
+  icon: string | React.ReactNode;
+  children?: MenuItem[];
+}
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -34,7 +43,7 @@ function App() {
       case 'chat':
         return <ChatRoom />;
       case 'ai-assistant':
-        return <AIAssistant />;
+        return <AIAssistantPage />;
       case 'permissions':
         return <UserPermissionManager />;
       case 'performance':
@@ -62,7 +71,7 @@ function App() {
     }
   };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { key: 'dashboard', label: '仪表板', icon: '📊' },
     {
       key: 'business-management',
@@ -103,9 +112,9 @@ function App() {
     },
   ];
 
-  const renderMenuItem = (item: any) => {
+  const renderMenuItem = (item: MenuItem) => {
     const isActive = currentPage === item.key;
-    const isParentActive = item.children && item.children.some((child: any) => currentPage === child.key);
+    const isParentActive = item.children && item.children.some((child: MenuItem) => currentPage === child.key);
 
     const itemStyle = {
       display: 'flex',
@@ -146,8 +155,8 @@ function App() {
             }
           }}
         >
-          <span style={{ fontSize: '20px' }}>{item.icon}</span>
-          {!isSidebarCollapsed && item.label}
+          <span style={{ fontSize: '20px' }}>{safeRender(item.icon)}</span>
+          {!isSidebarCollapsed && safeRender(item.label)}
           {isSidebarCollapsed && (
             <span style={{
               position: 'absolute',
@@ -163,13 +172,13 @@ function App() {
               pointerEvents: 'none',
               transition: 'opacity 0.2s ease-in-out',
             }} className="group-hover:opacity-100">
-              {item.label}
+              {safeRender(item.label)}
             </span>
           )}
         </button>
         {item.children && !isSidebarCollapsed && (
           <div style={{ marginLeft: '24px', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {item.children.map((child: any) => (
+            {safeRenderArray(item.children, (child: MenuItem) => (
               <button
                 key={child.key}
                 onClick={() => setCurrentPage(child.key)}
@@ -199,8 +208,8 @@ function App() {
                   }
                 }}
               >
-                <span style={{ fontSize: '16px' }}>{child.icon}</span>
-                {child.label}
+                <span style={{ fontSize: '16px' }}>{safeRender(child.icon)}</span>
+                {safeRender(child.label)}
               </button>
             ))}
           </div>
@@ -267,7 +276,7 @@ function App() {
         </div>
         <nav style={{ flexGrow: 1 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '0 16px' }}>
-            {menuItems.map(item => renderMenuItem(item))}
+            {safeRenderArray(menuItems, (item) => safeRenderMenuItem(item, renderMenuItem))}
           </div>
         </nav>
       </aside>

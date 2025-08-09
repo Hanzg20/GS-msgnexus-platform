@@ -15,6 +15,7 @@ import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 import Card from '../components/ui/Card';
 import StatCard from '../components/ui/StatCard';
 import Button from '../components/ui/Button';
+import { safeRender, safeRenderArray } from '../utils/safeRender';
 
 const DashboardModern: React.FC = () => {
   const [stats, setStats] = useState({
@@ -99,193 +100,189 @@ const DashboardModern: React.FC = () => {
               欢迎回来！这里是您的系统概览和关键指标
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ position: 'relative' }}>
-              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', width: '16px', height: '16px' }} />
-              <input
-                type="text"
-                placeholder="搜索..."
-                style={{
-                  paddingLeft: '40px',
-                  paddingRight: '16px',
-                  paddingTop: '8px',
-                  paddingBottom: '8px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  width: '200px'
-                }}
-              />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+              {safeRender(currentTime.toLocaleString())}
             </div>
             <Button variant="ghost">
-              <Bell style={{ width: '20px', height: '20px' }} />
+              <Bell style={{ width: '16px', height: '16px' }} />
+              通知
             </Button>
             <Button variant="ghost">
-              <Settings style={{ width: '20px', height: '20px' }} />
+              <Settings style={{ width: '16px', height: '16px' }} />
+              设置
             </Button>
           </div>
         </div>
       </div>
 
       <div style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* 统计卡片 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
-            <StatCard
-              title="总租户数"
-              value={stats.tenants}
-              icon={<Building2 style={{ width: '24px', height: '24px' }} />}
-              trend={{ value: 12, isPositive: true, label: '本月' }}
-              color="primary"
-            />
-            <StatCard
-              title="活跃用户"
-              value={stats.users.toLocaleString()}
-              icon={<Users style={{ width: '24px', height: '24px' }} />}
-              trend={{ value: 8, isPositive: true, label: '本周' }}
-              color="success"
-            />
-            <StatCard
-              title="今日消息"
-              value={stats.messages.toLocaleString()}
-              icon={<MessageSquare style={{ width: '24px', height: '24px' }} />}
-              trend={{ value: 15, isPositive: true, label: '今日' }}
-              color="warning"
-            />
-            <StatCard
-              title="系统状态"
-              value={stats.systemStatus}
-              icon={<Shield style={{ width: '24px', height: '24px' }} />}
-              color="purple"
-            />
-          </div>
+        {/* 统计卡片 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+          <StatCard
+            title="总租户数"
+            value={stats.tenants}
+            icon={<Building2 style={{ width: '24px', height: '24px' }} />}
+            color="primary"
+            trend={{ value: 12, isPositive: true, label: '本月' }}
+          />
+          <StatCard
+            title="活跃用户"
+            value={stats.users}
+            icon={<Users style={{ width: '24px', height: '24px' }} />}
+            color="success"
+            trend={{ value: 8, isPositive: true, label: '本周' }}
+          />
+          <StatCard
+            title="消息总数"
+            value={stats.messages}
+            icon={<MessageSquare style={{ width: '24px', height: '24px' }} />}
+            color="purple"
+            trend={{ value: 15, isPositive: true, label: '今日' }}
+          />
+          <StatCard
+            title="系统状态"
+            value={stats.systemStatus}
+            icon={<Shield style={{ width: '24px', height: '24px' }} />}
+            color="success"
+          />
+        </div>
 
-          {/* 图表区域 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
-            <Card>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>消息流量趋势</h3>
-                <Button variant="ghost" size="sm">查看详情</Button>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={messageData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="messages"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.1}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
+        {/* 图表区域 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+          <Card>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>消息趋势</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={messageData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip />
+                <Line type="monotone" dataKey="messages" stroke="#3b82f6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
 
-            <Card>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>用户活跃度</h3>
-                <Button variant="ghost" size="sm">查看详情</Button>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={userActivityData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="active"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
+          <Card>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>用户活跃度</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={userActivityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip />
+                <Area type="monotone" dataKey="active" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
 
-          {/* 系统状态卡片 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-            <Card>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统资源使用率</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#6b7280' }}>CPU 使用率</span>
-                    <span style={{ fontWeight: '600' }}>{stats.cpuUsage}%</span>
-                  </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${stats.cpuUsage}%`, height: '100%', backgroundColor: '#3b82f6', transition: 'width 0.3s ease' }} />
-                  </div>
+        {/* 系统状态和饼图 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+          <Card>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统状态分布</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '16px' }}>
+              {pieData.map((item, index) => (
+                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ 
+                    width: '12px', 
+                    height: '12px', 
+                    borderRadius: '50%', 
+                    backgroundColor: item.color 
+                  }} />
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                    {item.name}: {item.value}%
+                  </span>
                 </div>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#6b7280' }}>内存使用率</span>
-                    <span style={{ fontWeight: '600' }}>{stats.memoryUsage}%</span>
-                  </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${stats.memoryUsage}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.3s ease' }} />
-                  </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统资源使用</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>CPU 使用率</span>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>{stats.cpuUsage}%</span>
                 </div>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#6b7280' }}>磁盘使用率</span>
-                    <span style={{ fontWeight: '600' }}>{stats.diskUsage}%</span>
-                  </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${stats.diskUsage}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 0.3s ease' }} />
-                  </div>
+                <div style={{ 
+                  width: '100%', 
+                  height: '8px', 
+                  backgroundColor: '#e5e7eb', 
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    width: `${stats.cpuUsage}%`, 
+                    height: '100%', 
+                    backgroundColor: '#3b82f6',
+                    transition: 'width 0.3s ease'
+                  }} />
                 </div>
               </div>
-            </Card>
-
-            <Card>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统状态分布</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px' }}>
-                {pieData.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', backgroundColor: item.color, borderRadius: '50%' }} />
-                    <span style={{ fontSize: '14px', color: '#6b7280' }}>{item.name}</span>
-                  </div>
-                ))}
+              
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>内存使用率</span>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>{stats.memoryUsage}%</span>
+                </div>
+                <div style={{ 
+                  width: '100%', 
+                  height: '8px', 
+                  backgroundColor: '#e5e7eb', 
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    width: `${stats.memoryUsage}%`, 
+                    height: '100%', 
+                    backgroundColor: '#22c55e',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
               </div>
-            </Card>
-          </div>
+              
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>磁盘使用率</span>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>{stats.diskUsage}%</span>
+                </div>
+                <div style={{ 
+                  width: '100%', 
+                  height: '8px', 
+                  backgroundColor: '#e5e7eb', 
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    width: `${stats.diskUsage}%`, 
+                    height: '100%', 
+                    backgroundColor: '#f59e0b',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

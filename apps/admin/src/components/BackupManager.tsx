@@ -110,11 +110,25 @@ const BackupManager: React.FC = () => {
   const fetchJobs = async () => {
     try {
       const response = await apiClient.get('/api/v1/backup/jobs');
-      if (response.success) {
-        setJobs(response.data.jobs);
+      if (response.data) {
+        const data = response.data as any;
+        // 确保jobs是数组
+        let jobsData = [];
+        if (Array.isArray(data)) {
+          jobsData = data;
+        } else if (data && Array.isArray(data.jobs)) {
+          jobsData = data.jobs;
+        } else if (data && typeof data === 'object') {
+          // 如果data是对象但不是数组，尝试转换为数组
+          jobsData = Object.values(data).filter(item => typeof item === 'object' && item !== null);
+        }
+        setJobs(jobsData);
+      } else {
+        setJobs([]);
       }
     } catch (error: any) {
       console.error('获取备份作业列表失败:', error);
+      setJobs([]);
     }
   };
 
@@ -122,11 +136,13 @@ const BackupManager: React.FC = () => {
   const fetchSchedules = async () => {
     try {
       const response = await apiClient.get('/api/v1/backup/schedules');
-      if (response.success) {
-        setSchedules(response.data);
+      if (response.data) {
+        const data = response.data as any;
+        setSchedules(Array.isArray(data) ? data : (data.schedules || []));
       }
     } catch (error: any) {
       console.error('获取备份计划列表失败:', error);
+      setSchedules([]);
     }
   };
 
@@ -134,11 +150,13 @@ const BackupManager: React.FC = () => {
   const fetchStats = async () => {
     try {
       const response = await apiClient.get('/api/v1/backup/stats');
-      if (response.success) {
-        setStats(response.data);
+      if (response.data) {
+        const data = response.data as BackupStats;
+        setStats(data);
       }
     } catch (error: any) {
       console.error('获取备份统计信息失败:', error);
+      setStats(null);
     }
   };
 
@@ -146,7 +164,7 @@ const BackupManager: React.FC = () => {
   const createBackupJob = async (jobData: { name: string; type: string; metadata?: any }) => {
     try {
       const response = await apiClient.post('/api/v1/backup/jobs', jobData);
-      if (response.success) {
+      if (response.data) {
         fetchJobs();
         setShowCreateJob(false);
       }
@@ -159,7 +177,7 @@ const BackupManager: React.FC = () => {
   const cancelBackupJob = async (jobId: string) => {
     try {
       const response = await apiClient.post(`/api/v1/backup/jobs/${jobId}/cancel`);
-      if (response.success) {
+      if (response.data) {
         fetchJobs();
       }
     } catch (error: any) {
@@ -173,7 +191,7 @@ const BackupManager: React.FC = () => {
     
     try {
       const response = await apiClient.delete(`/api/v1/backup/jobs/${jobId}`);
-      if (response.success) {
+      if (response.data) {
         fetchJobs();
         fetchStats();
       }
@@ -188,7 +206,7 @@ const BackupManager: React.FC = () => {
       const response = await apiClient.post(`/api/v1/backup/jobs/${jobId}/restore`, {
         targetLocation: targetLocation || '/restore'
       });
-      if (response.success) {
+      if (response.data) {
         fetchJobs();
         alert('备份恢复已开始');
       }
@@ -201,7 +219,7 @@ const BackupManager: React.FC = () => {
   const createBackupSchedule = async (scheduleData: any) => {
     try {
       const response = await apiClient.post('/api/v1/backup/schedules', scheduleData);
-      if (response.success) {
+      if (response.data) {
         fetchSchedules();
         setShowCreateSchedule(false);
       }
@@ -214,7 +232,7 @@ const BackupManager: React.FC = () => {
   const toggleSchedule = async (scheduleId: string) => {
     try {
       const response = await apiClient.patch(`/api/v1/backup/schedules/${scheduleId}/toggle`);
-      if (response.success) {
+      if (response.data) {
         fetchSchedules();
       }
     } catch (error: any) {
@@ -228,7 +246,7 @@ const BackupManager: React.FC = () => {
     
     try {
       const response = await apiClient.delete(`/api/v1/backup/schedules/${scheduleId}`);
-      if (response.success) {
+      if (response.data) {
         fetchSchedules();
         fetchStats();
       }
@@ -241,7 +259,7 @@ const BackupManager: React.FC = () => {
   const cleanupExpiredBackups = async (retentionDays: number = 30) => {
     try {
       const response = await apiClient.post(`/api/v1/backup/cleanup?retentionDays=${retentionDays}`);
-      if (response.success) {
+      if (response.data) {
         fetchJobs();
         fetchStats();
         alert('备份清理已开始');
@@ -468,7 +486,7 @@ const BackupManager: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {jobs
+                {Array.isArray(jobs) ? jobs
                   .filter(job => 
                     (!filters.status || job.status === filters.status) &&
                     (!filters.type || job.type === filters.type)
@@ -557,7 +575,7 @@ const BackupManager: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )) : []}
               </tbody>
             </table>
           </div>

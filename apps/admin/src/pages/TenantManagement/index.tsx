@@ -62,11 +62,25 @@ const TenantManagement: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/api/v1/tenants');
-      if (response.success) {
-        setTenants(response.data);
+      if (response.data) {
+        const data = response.data as any;
+        // 确保tenants是数组
+        let tenantsData = [];
+        if (Array.isArray(data)) {
+          tenantsData = data;
+        } else if (data && Array.isArray(data.tenants)) {
+          tenantsData = data.tenants;
+        } else if (data && typeof data === 'object') {
+          // 如果data是对象但不是数组，尝试转换为数组
+          tenantsData = Object.values(data).filter(item => typeof item === 'object' && item !== null);
+        }
+        setTenants(tenantsData);
+      } else {
+        setTenants([]);
       }
     } catch (error: any) {
       console.error('获取租户列表失败:', error);
+      setTenants([]);
     } finally {
       setLoading(false);
     }
@@ -76,7 +90,7 @@ const TenantManagement: React.FC = () => {
   const createTenant = async (tenantData: any) => {
     try {
       const response = await apiClient.post('/api/v1/tenants', tenantData);
-      if (response.success) {
+      if (response.data) {
         fetchTenants();
         setShowCreateModal(false);
       }
@@ -89,7 +103,7 @@ const TenantManagement: React.FC = () => {
   const updateTenant = async (tenantId: string, updateData: any) => {
     try {
       const response = await apiClient.put(`/api/v1/tenants/${tenantId}`, updateData);
-      if (response.success) {
+      if (response.data) {
         fetchTenants();
       }
     } catch (error: any) {
@@ -103,7 +117,7 @@ const TenantManagement: React.FC = () => {
     
     try {
       const response = await apiClient.delete(`/api/v1/tenants/${tenantId}`);
-      if (response.success) {
+      if (response.data) {
         fetchTenants();
       }
     } catch (error: any) {
@@ -115,7 +129,7 @@ const TenantManagement: React.FC = () => {
   const updateTenantStatus = async (tenantId: string, status: string) => {
     try {
       const response = await apiClient.patch(`/api/v1/tenants/${tenantId}/status`, { status });
-      if (response.success) {
+      if (response.data) {
         fetchTenants();
       }
     } catch (error: any) {
@@ -179,13 +193,13 @@ const TenantManagement: React.FC = () => {
     }
   };
 
-  const filteredTenants = tenants.filter(tenant => 
+  const filteredTenants = Array.isArray(tenants) ? tenants.filter(tenant => 
     (!filters.status || tenant.status === filters.status) &&
     (!filters.planType || tenant.planType === filters.planType) &&
     (!filters.search || 
       tenant.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       tenant.subdomain.toLowerCase().includes(filters.search.toLowerCase()))
-  );
+  ) : [];
 
   if (loading) {
     return (
@@ -244,7 +258,7 @@ const TenantManagement: React.FC = () => {
               </div>
               <div>
                 <p style={{ fontSize: '14px', color: '#6b7280' }}>总租户数</p>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{tenants.length}</p>
+                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{Array.isArray(tenants) ? tenants.length : 0}</p>
               </div>
             </div>
           </Card>
@@ -256,7 +270,7 @@ const TenantManagement: React.FC = () => {
               <div>
                 <p style={{ fontSize: '14px', color: '#6b7280' }}>活跃租户</p>
                 <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-                  {tenants.filter(t => t.status === 'active').length}
+                  {Array.isArray(tenants) ? tenants.filter(t => t.status === 'active').length : 0}
                 </p>
               </div>
             </div>
@@ -269,7 +283,7 @@ const TenantManagement: React.FC = () => {
               <div>
                 <p style={{ fontSize: '14px', color: '#6b7280' }}>总用户数</p>
                 <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-                  {tenants.reduce((sum, t) => sum + t.userCount, 0)}
+                  {Array.isArray(tenants) ? tenants.reduce((sum, t) => sum + t.userCount, 0) : 0}
                 </p>
               </div>
             </div>
@@ -282,7 +296,7 @@ const TenantManagement: React.FC = () => {
               <div>
                 <p style={{ fontSize: '14px', color: '#6b7280' }}>总消息数</p>
                 <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-                  {tenants.reduce((sum, t) => sum + t.messageCount, 0)}
+                  {Array.isArray(tenants) ? tenants.reduce((sum, t) => sum + t.messageCount, 0) : 0}
                 </p>
               </div>
             </div>
@@ -398,17 +412,17 @@ const TenantManagement: React.FC = () => {
                     </td>
                     <td style={{ padding: '12px' }}>
                       <p style={{ fontSize: '14px', color: '#374151' }}>
-                        {tenant.userCount} / {tenant.config.maxUsers}
+                        {tenant.userCount} / {tenant.config?.maxUsers || 0}
                       </p>
                     </td>
                     <td style={{ padding: '12px' }}>
                       <p style={{ fontSize: '14px', color: '#374151' }}>
-                        {tenant.messageCount.toLocaleString()}
+                        {(tenant.messageCount || 0).toLocaleString()}
                       </p>
                     </td>
                     <td style={{ padding: '12px' }}>
                       <p style={{ fontSize: '14px', color: '#6b7280' }}>
-                        {new Date(tenant.lastActive).toLocaleString()}
+                        {tenant.lastActive ? new Date(tenant.lastActive).toLocaleString() : '从未活跃'}
                       </p>
                     </td>
                     <td style={{ padding: '12px' }}>
@@ -505,18 +519,18 @@ const TenantManagement: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>用户数</label>
-                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{selectedTenant.userCount} / {selectedTenant.config.maxUsers}</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{selectedTenant.userCount} / {selectedTenant.config?.maxUsers || 0}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>消息数</label>
-                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{selectedTenant.messageCount.toLocaleString()}</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{(selectedTenant.messageCount || 0).toLocaleString()}</p>
                 </div>
               </div>
               
               <div>
                 <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>功能特性</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {selectedTenant.config.features.map((feature, index) => (
+                  {(selectedTenant.config?.features || []).map((feature, index) => (
                     <span
                       key={index}
                       style={{
@@ -536,11 +550,11 @@ const TenantManagement: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>创建时间</label>
-                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{new Date(selectedTenant.createdAt).toLocaleString()}</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{selectedTenant.createdAt ? new Date(selectedTenant.createdAt).toLocaleString() : '未知'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>最后活跃</label>
-                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{new Date(selectedTenant.lastActive).toLocaleString()}</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280' }}>{selectedTenant.lastActive ? new Date(selectedTenant.lastActive).toLocaleString() : '从未活跃'}</p>
                 </div>
               </div>
             </div>

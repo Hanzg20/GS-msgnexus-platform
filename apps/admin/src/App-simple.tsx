@@ -7,78 +7,85 @@ function App() {
     switch (currentPage) {
       case 'dashboard':
         return (
-          <div style={{ padding: '20px' }}>
-            <h1>MsgNexus 仪表板</h1>
-            <p>欢迎使用 MsgNexus 管理平台</p>
-            <div style={{ marginTop: '20px' }}>
-              <button onClick={() => setCurrentPage('tenant')} style={{ marginRight: '10px', padding: '10px' }}>
-                租户管理
-              </button>
-              <button onClick={() => setCurrentPage('message')} style={{ marginRight: '10px', padding: '10px' }}>
-                消息监控
-              </button>
-              <button onClick={() => setCurrentPage('monitor')} style={{ padding: '10px' }}>
-                系统监控
-              </button>
-            </div>
+          <div style={{ padding: '24px' }}>
+            <h1>仪表板</h1>
+            <p>欢迎使用 MsgNexus 平台</p>
           </div>
         );
-      case 'tenant':
+      case 'settings':
         return (
-          <div style={{ padding: '20px' }}>
-            <h1>租户管理</h1>
-            <p>租户管理功能正在加载...</p>
-            <button onClick={() => setCurrentPage('dashboard')} style={{ padding: '10px' }}>
-              返回仪表板
-            </button>
-          </div>
-        );
-      case 'message':
-        return (
-          <div style={{ padding: '20px' }}>
-            <h1>消息监控</h1>
-            <p>消息监控功能正在加载...</p>
-            <button onClick={() => setCurrentPage('dashboard')} style={{ padding: '10px' }}>
-              返回仪表板
-            </button>
-          </div>
-        );
-      case 'monitor':
-        return (
-          <div style={{ padding: '20px' }}>
-            <h1>系统监控</h1>
-            <p>系统监控功能正在加载...</p>
-            <button onClick={() => setCurrentPage('dashboard')} style={{ padding: '10px' }}>
-              返回仪表板
-            </button>
+          <div style={{ padding: '24px' }}>
+            <h1>系统设置</h1>
+            <p>设置页面</p>
           </div>
         );
       default:
         return (
-          <div style={{ padding: '20px' }}>
-            <h1>MsgNexus 仪表板</h1>
-            <p>欢迎使用 MsgNexus 管理平台</p>
+          <div style={{ padding: '24px' }}>
+            <h1>仪表板</h1>
+            <p>欢迎使用 MsgNexus 平台</p>
           </div>
         );
     }
   };
 
+  const menuItems = [
+    { key: 'dashboard', label: '仪表板', icon: '📊' },
+    { key: 'settings', label: '系统设置', icon: '⚙️' },
+  ];
+
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f5f5f5',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <div style={{
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: '280px',
         backgroundColor: '#1a202c',
         color: 'white',
-        padding: '20px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
       }}>
-        <h1 style={{ margin: 0 }}>MsgNexus</h1>
-        <p style={{ margin: '5px 0 0 0', opacity: 0.8 }}>专业消息管理平台</p>
-      </div>
-      {renderPage()}
+        <div style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          marginBottom: '24px',
+          textAlign: 'left',
+        }}>
+          MsgNexus
+        </div>
+        <nav style={{ flexGrow: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {menuItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setCurrentPage(item.key)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  backgroundColor: currentPage === item.key ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  color: 'white',
+                  fontWeight: 'medium',
+                  cursor: 'pointer',
+                  border: 'none',
+                  textAlign: 'left',
+                  fontSize: '16px',
+                }}
+              >
+                <span style={{ fontSize: '20px' }}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main style={{ flexGrow: 1, padding: '24px', overflowY: 'auto' }}>
+        {renderPage()}
+      </main>
     </div>
   );
 }

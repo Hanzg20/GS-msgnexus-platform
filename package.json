@@ -1,6 +1,6 @@
 {
   "name": "msgnexus",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "专业的消息管理平台 - 企业级多租户通信解决方案",
   "private": true,
   "workspaces": [

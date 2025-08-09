@@ -4,7 +4,6 @@ import Redis from 'redis';
 
 // Memory-based rate limiter for development
 const memoryRateLimiter = new RateLimiterMemory({
-  keyGenerator: (req) => req.ip,
   points: 100, // Number of requests
   duration: 60, // Per 60 seconds
 });
@@ -19,7 +18,6 @@ if (process.env.REDIS_URL) {
 
   redisRateLimiter = new RateLimiterRedis({
     storeClient: redisClient,
-    keyGenerator: (req) => req.ip,
     points: 100,
     duration: 60,
   });
@@ -30,7 +28,7 @@ export const rateLimiterMiddleware = async (req: Request, res: Response, next: N
     const limiter = redisRateLimiter || memoryRateLimiter;
     await limiter.consume(req.ip);
     next();
-  } catch (error) {
+  } catch (error: any) {
     res.status(429).json({
       success: false,
       error: {
@@ -44,11 +42,11 @@ export const rateLimiterMiddleware = async (req: Request, res: Response, next: N
 
 export const userRateLimiterMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.id || req.ip;
+    const userId = (req as any).user?.id || req.ip;
     const limiter = redisRateLimiter || memoryRateLimiter;
     await limiter.consume(`user-${userId}`);
     next();
-  } catch (error) {
+  } catch (error: any) {
     res.status(429).json({
       success: false,
       error: {
@@ -66,7 +64,7 @@ export const apiRateLimiterMiddleware = async (req: Request, res: Response, next
     const limiter = redisRateLimiter || memoryRateLimiter;
     await limiter.consume(`api-${apiKey}`);
     next();
-  } catch (error) {
+  } catch (error: any) {
     res.status(429).json({
       success: false,
       error: {
@@ -81,13 +79,12 @@ export const apiRateLimiterMiddleware = async (req: Request, res: Response, next
 export const loginRateLimiterMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limiter = new RateLimiterMemory({
-      keyGenerator: (req) => req.ip,
       points: 5, // 5 login attempts
       duration: 300, // Per 5 minutes
     });
     await limiter.consume(req.ip);
     next();
-  } catch (error) {
+  } catch (error: any) {
     res.status(429).json({
       success: false,
       error: {
@@ -101,15 +98,14 @@ export const loginRateLimiterMiddleware = async (req: Request, res: Response, ne
 
 export const messageRateLimiterMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.id || req.ip;
+    const userId = (req as any).user?.id || req.ip;
     const limiter = new RateLimiterMemory({
-      keyGenerator: (req) => `message-${userId}`,
       points: 50, // 50 messages
       duration: 60, // Per minute
     });
     await limiter.consume(`message-${userId}`);
     next();
-  } catch (error) {
+  } catch (error: any) {
     res.status(429).json({
       success: false,
       error: {

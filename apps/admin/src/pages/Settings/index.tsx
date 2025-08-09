@@ -21,6 +21,14 @@ import {
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import { safeRender } from '../../utils/safeRender';
+
+// 定义标签类型
+interface TabItem {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+}
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -68,7 +76,7 @@ const Settings: React.FC = () => {
     alert('设置已保存');
   };
 
-  const tabs = [
+  const tabs: TabItem[] = [
     { key: 'general', label: '常规设置', icon: <SettingsIcon style={{ width: '16px', height: '16px' }} /> },
     { key: 'security', label: '安全设置', icon: <Shield style={{ width: '16px', height: '16px' }} /> },
     { key: 'notifications', label: '通知设置', icon: <Bell style={{ width: '16px', height: '16px' }} /> },
@@ -125,8 +133,8 @@ const Settings: React.FC = () => {
                       width: '100%'
                     }}
                   >
-                    {tab.icon}
-                    {tab.label}
+                    {safeRender(tab.icon)}
+                    {safeRender(tab.label)}
                   </button>
                 ))}
               </div>
@@ -198,7 +206,6 @@ const Settings: React.FC = () => {
                         <option value="Asia/Shanghai">Asia/Shanghai</option>
                         <option value="UTC">UTC</option>
                         <option value="America/New_York">America/New_York</option>
-                        <option value="Europe/London">Europe/London</option>
                       </select>
                     </div>
 
@@ -219,7 +226,6 @@ const Settings: React.FC = () => {
                       >
                         <option value="zh-CN">中文 (简体)</option>
                         <option value="en-US">English (US)</option>
-                        <option value="ja-JP">日本語</option>
                       </select>
                     </div>
                   </div>
@@ -276,11 +282,11 @@ const Settings: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         启用双因素认证
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                        为账户添加额外的安全保护
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        提高账户安全性
                       </p>
                     </div>
                     <input
@@ -299,8 +305,6 @@ const Settings: React.FC = () => {
                       type="number"
                       value={settings.security.sessionTimeout}
                       onChange={(e) => handleSettingChange('security', 'sessionTimeout', parseInt(e.target.value))}
-                      min="5"
-                      max="480"
                       style={{
                         width: '100%',
                         padding: '8px 12px',
@@ -334,10 +338,10 @@ const Settings: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         启用审计日志
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         记录所有用户操作和系统事件
                       </p>
                     </div>
@@ -361,10 +365,10 @@ const Settings: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         邮件通知
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         接收重要事件的邮件通知
                       </p>
                     </div>
@@ -378,11 +382,11 @@ const Settings: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         推送通知
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                        在浏览器中显示实时通知
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        接收实时推送通知
                       </p>
                     </div>
                     <input
@@ -395,10 +399,10 @@ const Settings: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         系统告警
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         接收系统异常和错误告警
                       </p>
                     </div>
@@ -412,10 +416,10 @@ const Settings: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         周报邮件
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         每周发送系统使用情况报告
                       </p>
                     </div>
@@ -439,14 +443,12 @@ const Settings: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div>
                     <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
-                      最大文件上传大小 (MB)
+                      最大文件大小 (MB)
                     </label>
                     <input
                       type="number"
                       value={settings.system.maxFileSize}
                       onChange={(e) => handleSettingChange('system', 'maxFileSize', parseInt(e.target.value))}
-                      min="1"
-                      max="100"
                       style={{
                         width: '100%',
                         padding: '8px 12px',
@@ -459,11 +461,11 @@ const Settings: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         启用自动备份
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                        定期备份系统数据和配置
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        定期备份系统数据
                       </p>
                     </div>
                     <input
@@ -500,10 +502,10 @@ const Settings: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block' }}>
                         启用系统监控
                       </label>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         监控系统性能和资源使用情况
                       </p>
                     </div>

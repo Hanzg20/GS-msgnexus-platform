@@ -106,8 +106,8 @@ const SystemMonitor: React.FC = () => {
   const fetchSystemOverview = async () => {
     try {
       const response = await apiClient.get('/api/v1/system/overview');
-      if (response.success) {
-        setMetrics(response.data);
+      if (response.data) {
+        setMetrics(response.data as SystemMetrics);
       }
     } catch (error: any) {
       console.error('获取系统概览失败:', error);
@@ -118,8 +118,8 @@ const SystemMonitor: React.FC = () => {
   const fetchHealthStatus = async () => {
     try {
       const response = await apiClient.get('/api/v1/system/health');
-      if (response.success) {
-        setHealth(response.data);
+      if (response.data) {
+        setHealth(response.data as HealthStatus);
       }
     } catch (error: any) {
       console.error('获取健康状态失败:', error);
@@ -130,8 +130,9 @@ const SystemMonitor: React.FC = () => {
   const fetchAlerts = async () => {
     try {
       const response = await apiClient.get('/api/v1/system/alerts');
-      if (response.success) {
-        setAlerts(response.data.alerts);
+      if (response.data) {
+        const data = response.data as any;
+        setAlerts(data.alerts || data || []);
       }
     } catch (error: any) {
       console.error('获取告警信息失败:', error);
@@ -144,7 +145,7 @@ const SystemMonitor: React.FC = () => {
       const response = await apiClient.post(`/api/v1/system/alerts/${alertId}/acknowledge`, {
         acknowledgedBy: 'admin'
       });
-      if (response.success) {
+      if (response.data) {
         fetchAlerts();
       }
     } catch (error: any) {
@@ -292,8 +293,8 @@ const SystemMonitor: React.FC = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: '14px', color: '#6b7280' }}>CPU 使用率</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics.cpu.usage}%</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{metrics.cpu.cores} 核心</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics?.cpu?.usage || 0}%</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{metrics?.cpu?.cores || 0} 核心</p>
                 </div>
               </div>
             </Card>
@@ -304,8 +305,8 @@ const SystemMonitor: React.FC = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: '14px', color: '#6b7280' }}>内存使用率</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics.memory.usage}%</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatBytes(metrics.memory.used)} / {formatBytes(metrics.memory.total)}</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics?.memory?.usage || 0}%</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatBytes(metrics?.memory?.used || 0)} / {formatBytes(metrics?.memory?.total || 0)}</p>
                 </div>
               </div>
             </Card>
@@ -316,8 +317,8 @@ const SystemMonitor: React.FC = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: '14px', color: '#6b7280' }}>磁盘使用率</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics.disk.usage}%</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatBytes(metrics.disk.used)} / {formatBytes(metrics.disk.total)}</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics?.disk?.usage || 0}%</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatBytes(metrics?.disk?.used || 0)} / {formatBytes(metrics?.disk?.total || 0)}</p>
                 </div>
               </div>
             </Card>
@@ -328,8 +329,8 @@ const SystemMonitor: React.FC = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: '14px', color: '#6b7280' }}>网络连接</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics.network.connections}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatBytes(metrics.network.bytesIn)} / {formatBytes(metrics.network.bytesOut)}</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{metrics?.network?.connections || 0}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatBytes(metrics?.network?.bytesIn || 0)} / {formatBytes(metrics?.network?.bytesOut || 0)}</p>
                 </div>
               </div>
             </Card>
@@ -417,11 +418,11 @@ const SystemMonitor: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '14px', color: '#6b7280' }}>1分钟平均</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{metrics.cpu.loadAverage[0].toFixed(2)}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{metrics?.cpu?.loadAverage?.[0]?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
-                      width: `${Math.min(metrics.cpu.loadAverage[0] * 10, 100)}%`, 
+                      width: `${Math.min((metrics?.cpu?.loadAverage?.[0] || 0) * 10, 100)}%`, 
                       height: '100%', 
                       backgroundColor: '#3b82f6', 
                       transition: 'width 0.3s ease' 
@@ -431,11 +432,11 @@ const SystemMonitor: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '14px', color: '#6b7280' }}>5分钟平均</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{metrics.cpu.loadAverage[1].toFixed(2)}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{metrics?.cpu?.loadAverage?.[1]?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
-                      width: `${Math.min(metrics.cpu.loadAverage[1] * 10, 100)}%`, 
+                      width: `${Math.min((metrics?.cpu?.loadAverage?.[1] || 0) * 10, 100)}%`, 
                       height: '100%', 
                       backgroundColor: '#f59e0b', 
                       transition: 'width 0.3s ease' 
@@ -444,12 +445,11 @@ const SystemMonitor: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#6b7280' }}>15分钟平均</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{metrics.cpu.loadAverage[2].toFixed(2)}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{metrics?.cpu?.loadAverage?.[2]?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
-                      width: `${Math.min(metrics.cpu.loadAverage[2] * 10, 100)}%`, 
+                      width: `${Math.min((metrics?.cpu?.loadAverage?.[2] || 0) * 10, 100)}%`, 
                       height: '100%', 
                       backgroundColor: '#10b981', 
                       transition: 'width 0.3s ease' 
@@ -465,11 +465,11 @@ const SystemMonitor: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '14px', color: '#6b7280' }}>已使用</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{formatBytes(metrics.memory.used)}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{formatBytes(metrics?.memory?.used || 0)}</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
-                      width: `${metrics.memory.usage}%`, 
+                      width: `${metrics?.memory?.usage || 0}%`, 
                       height: '100%', 
                       backgroundColor: '#f59e0b', 
                       transition: 'width 0.3s ease' 
@@ -479,11 +479,11 @@ const SystemMonitor: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '14px', color: '#6b7280' }}>可用</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{formatBytes(metrics.memory.free)}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{formatBytes(metrics?.memory?.free || 0)}</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
-                      width: `${100 - metrics.memory.usage}%`, 
+                      width: `${100 - (metrics?.memory?.usage || 0)}%`, 
                       height: '100%', 
                       backgroundColor: '#10b981', 
                       transition: 'width 0.3s ease' 
@@ -492,7 +492,7 @@ const SystemMonitor: React.FC = () => {
                 </div>
                 <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '4px' }}>
                   <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
-                    进程内存: {formatBytes(metrics.processMemory.heapUsed)} / {formatBytes(metrics.processMemory.heapTotal)}
+                    进程内存: {formatBytes(metrics?.processMemory?.heapUsed || 0)} / {formatBytes(metrics?.processMemory?.heapTotal || 0)}
                   </p>
                 </div>
               </div>
