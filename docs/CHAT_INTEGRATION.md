@@ -154,3 +154,53 @@ const socket = io('wss://chat.example.com', {
 - 验证
   - 访问: `http://<服务器IP或域名>:3031/health`
   - 从第三方页面（其 Origin=FRONTEND_URL）发起 Socket.IO 连接应不再报 CORS 错误。 
+
+- 预设
+  - 服务器 IP: 10.0.0.243
+  - API: http://10.0.0.243:3030
+  - Realtime: ws://10.0.0.243:3031（path /socket.io）
+
+- REST（curl）
+  ```bash
+  API=http://10.0.0.243:3030
+
+  # 健康检查
+  curl "$API/health"
+
+  # 创建消息
+  curl -X POST "$API/api/v1/messages" \
+    -H "Content-Type: application/json" \
+    -d '{"tenantId":"t-1","type":"sms","sender":"MsgNexus","recipient":"+123","content":"hello from LAN"}'
+
+  # 查询消息列表
+  curl "$API/api/v1/messages?limit=5"
+  ```
+
+- Socket.IO（Node 命令行）
+  ```bash
+  # 进入临时目录并安装依赖
+  mkdir -p ~/mn-test && cd ~/mn-test
+  npm init -y >/dev/null 2>&1
+  npm i socket.io-client@4.8.1 --silent
+
+  # 连接、进房、发一条消息
+  node - <<'NODE'
+  const { io } = require('socket.io-client');
+  const WS = 'http://10.0.0.243:3031';
+  const socket = io(WS, { path: '/socket.io', transports: ['websocket'] });
+
+  socket.on('connect', () => {
+    console.log('connected', socket.id);
+    socket.emit('join-room', 'room-001');
+    socket.emit('send-message', { roomId:'room-001', message:'hello from CLI', userId:'cli' });
+    setTimeout(() => { socket.close(); process.exit(0); }, 2000);
+  });
+
+  socket.on('new-message', (m) => console.log('new-message', m));
+  socket.on('connect_error', (e) => console.error('connect_error', e.message));
+  NODE
+  ```
+
+- 注意
+  - 若命令行提示“npm: command not found”，先安装/启用 Node 18（或在 Mac 上执行 `source ~/.nvm/nvm.sh && nvm use 18`）。
+  - 若经浏览器网页跨设备访问实时服务，需在服务端设置 FRONTEND_URL（文档已写）；命令行使用 socket.io-client 直连一般不受 CORS 影响。 

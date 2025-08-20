@@ -40,6 +40,8 @@ class RealtimeService {
   private typingHandlers: ((typing: TypingIndicator) => void)[] = [];
   private notificationHandlers: ((notification: SystemNotification) => void)[] = [];
   private connectionHandlers: ((connected: boolean) => void)[] = [];
+  private recentMessagesHandlers: ((messages: RealtimeMessage[]) => void)[] = [];
+  private messageReadHandlers: ((payload: { messageId: string; userId: string; timestamp: string }) => void)[] = [];
 
   constructor() {
     this.initializeSocket();
@@ -47,7 +49,9 @@ class RealtimeService {
 
   private initializeSocket() {
     try {
-      this.socket = io('http://localhost:3031', {
+      const WS_URL = process.env.REACT_APP_REALTIME_URL || 'http://localhost:3031';
+      this.socket = io(WS_URL, {
+        path: '/socket.io',
         transports: ['websocket', 'polling'],
         timeout: 20000,
         reconnection: true,
@@ -117,6 +121,18 @@ class RealtimeService {
     this.socket.on('welcome', (data: any) => {
       console.log('👋 Welcome message:', data);
     });
+
+    // Recent messages (new)
+    this.socket.on('recent-messages', (messages: RealtimeMessage[]) => {
+      console.log('🗂 recent-messages:', messages?.length || 0);
+      this.recentMessagesHandlers.forEach(h => h(messages || []));
+    });
+
+    // Message read (new)
+    this.socket.on('message-read', (payload: { messageId: string; userId: string; timestamp: string }) => {
+      console.log('👁️ message-read:', payload);
+      this.messageReadHandlers.forEach(h => h(payload));
+    });
   }
 
   // Public methods
@@ -156,10 +172,10 @@ class RealtimeService {
     }
   }
 
-  public joinTenant(tenantId: string) {
+  public joinTenant(tenantId: string, userId?: string) {
     if (this.socket && this.isConnected) {
-      this.socket.emit('join-tenant', tenantId);
-      console.log(`👥 Joined tenant: ${tenantId}`);
+      this.socket.emit('join-tenant', { tenantId, userId });
+      console.log(`👥 Joined tenant: ${tenantId} as ${userId || '-'}`);
     } else {
       console.warn('Socket not connected, cannot join tenant');
     }
@@ -251,6 +267,14 @@ class RealtimeService {
 
   public onConnectionChange(handler: (connected: boolean) => void) {
     this.connectionHandlers.push(handler);
+  }
+
+  public onRecentMessages(handler: (messages: RealtimeMessage[]) => void) {
+    this.recentMessagesHandlers.push(handler);
+  }
+
+  public onMessageRead(handler: (payload: { messageId: string; userId: string; timestamp: string }) => void) {
+    this.messageReadHandlers.push(handler);
   }
 
   // Event handlers notification

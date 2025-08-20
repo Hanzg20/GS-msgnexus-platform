@@ -15,7 +15,7 @@
     "clean": "npm run clean:api && npm run clean:realtime && npm run clean:admin",
     "setup": "npm install && npm run build",
     "dev:api": "cd apps/api && npm run dev",
-    "dev:realtime": "cd apps/realtime && npm run dev", 
+    "dev:realtime": "cd apps/realtime && npm run dev",
     "dev:admin": "cd apps/admin && npm start",
     "build:api": "cd apps/api && npm run build",
     "build:realtime": "cd apps/realtime && npm run build",
@@ -50,5 +50,8 @@
     "type": "git",
     "url": "https://github.com/msgnexus/platform.git"
   },
-  "homepage": "https://msgnexus.com"
+  "homepage": "https://msgnexus.com",
+  "dependencies": {
+    "antd": "^5.27.0"
+  }
 }

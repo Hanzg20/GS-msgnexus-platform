@@ -85,21 +85,28 @@ export const logHttp = (message: string, meta?: any) => {
   logger.http(message, meta);
 };
 
-// 请求日志中间件
+// 请求日志中间件（增强：记录 IP、用户、租户、UA）
 export const requestLogger = (req: any, res: any, next: any) => {
   const start = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - start;
-    const logMessage = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`;
-    
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || '-';
+    const user = req.user || {};
+    const userId = user.id || '-';
+    const userEmail = user.email || '-';
+    const tenantId = user.tenantId || '-';
+    const ua = req.get?.('User-Agent') || '-';
+
+    const line = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms ip=${ip} user=${userId}/${userEmail} tenant=${tenantId} ua="${ua}"`;
+
     if (res.statusCode >= 400) {
-      logger.warn(logMessage);
+      logger.warn(line);
     } else {
-      logger.info(logMessage);
+      logger.info(line);
     }
   });
-  
+
   next();
 };
 
@@ -113,7 +120,7 @@ export const errorLogger = (error: any, req: any, res: any, next: any) => {
     ip: req.ip,
     userAgent: req.get('User-Agent')
   });
-  
+
   next(error);
 };
 

@@ -74,40 +74,69 @@ function App() {
   const menuItems: MenuItem[] = [
     { key: 'dashboard', label: '仪表板', icon: '📊' },
     {
-      key: 'business-management',
-      label: '业务管理',
+      key: 'tenant-management',
+      label: '租户管理',
       icon: '🏢',
       children: [
-        { key: 'tenant', label: '租户管理', icon: '🏢' },
-        { key: 'message', label: '消息监控', icon: '💬' },
-        { key: 'monitor', label: '系统监控', icon: '📈' },
-        { key: 'chat', label: '实时聊天', icon: '💭' },
-        { key: 'ai-assistant', label: 'AI 助手', icon: '🤖' },
-        { key: 'permissions', label: '权限管理', icon: '🔐' },
+        { key: 'tenant', label: '租户列表', icon: '🏢' },
+        { key: 'tenant-details', label: '租户详情', icon: '📋' },
+        { key: 'tenant-packages', label: '套餐管理', icon: '📦' },
+        { key: 'tenant-stats', label: '使用统计', icon: '📈' },
       ],
     },
     {
-      key: 'system-management',
-      label: '系统管理',
-      icon: '⚙️',
+      key: 'message-operations',
+      label: '消息运营',
+      icon: '💬',
       children: [
-        { key: 'performance', label: '性能监控', icon: '📊' },
-        { key: 'security', label: '安全监控', icon: '🛡️' },
+        { key: 'message', label: '消息监控', icon: '📊' },
+        { key: 'chat', label: '实时聊天', icon: '💭' },
+        { key: 'message-status', label: '发送状态', icon: '✅' },
+        { key: 'message-errors', label: '错误分析', icon: '❌' },
+      ],
+    },
+    {
+      key: 'system-monitoring',
+      label: '系统监控',
+      icon: '📈',
+      children: [
+        { key: 'monitor', label: '系统监控', icon: '🖥️' },
+        { key: 'performance', label: '性能监控', icon: '⚡' },
         { key: 'process', label: '进程管理', icon: '⚙️' },
+        { key: 'resource-usage', label: '资源使用率', icon: '💾' },
+      ],
+    },
+    {
+      key: 'security-management',
+      label: '安全管理',
+      icon: '🛡️',
+      children: [
+        { key: 'security', label: '安全监控', icon: '🔒' },
+        { key: 'permissions', label: '权限管理', icon: '🔐' },
+        { key: 'audit', label: '审计日志', icon: '📋' },
+        { key: 'access-control', label: '访问控制', icon: '🚪' },
+      ],
+    },
+    {
+      key: 'operations-management',
+      label: '运维管理',
+      icon: '🛠️',
+      children: [
         { key: 'logs', label: '日志管理', icon: '📋' },
         { key: 'backup', label: '备份恢复', icon: '💾' },
         { key: 'diagnostics', label: '系统诊断', icon: '🔍' },
-        { key: 'audit', label: '审计日志', icon: '📋' },
+        { key: 'notifications', label: '通知中心', icon: '🔔' },
       ],
     },
     {
-      key: 'operations-support',
-      label: '运维支持',
-      icon: '🛠️',
+      key: 'support-services',
+      label: '支持服务',
+      icon: '📚',
       children: [
-        { key: 'notifications', label: '通知中心', icon: '🔔' },
-        { key: 'help', label: '帮助中心', icon: '📚' },
+        { key: 'help', label: '帮助中心', icon: '❓' },
+        { key: 'ai-assistant', label: 'AI 助手', icon: '🤖' },
         { key: 'settings', label: '系统设置', icon: '⚙️' },
+        { key: 'knowledge-base', label: '知识库', icon: '📖' },
       ],
     },
   ];
@@ -138,7 +167,7 @@ function App() {
       transform: 'translateX(4px)',
     };
 
-    return (
+  return (
       <div key={item.key}>
         <button
           onClick={() => item.children ? null : setCurrentPage(item.key)}

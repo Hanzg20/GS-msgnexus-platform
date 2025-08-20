@@ -132,10 +132,27 @@ const SystemMonitor: React.FC = () => {
       const response = await apiClient.get('/api/v1/system/alerts');
       if (response.data) {
         const data = response.data as any;
-        setAlerts(data.alerts || data || []);
+        // 确保alerts始终是一个数组
+        let alertsData: Alert[] = [];
+        
+        if (Array.isArray(data)) {
+          alertsData = data;
+        } else if (data && Array.isArray(data.alerts)) {
+          alertsData = data.alerts;
+        } else if (data && typeof data === 'object') {
+          // 如果data是对象但不是数组，尝试转换为数组
+          alertsData = Object.values(data).filter(item => 
+            typeof item === 'object' && item !== null && 'id' in item
+          ) as Alert[];
+        }
+        
+        setAlerts(alertsData);
+      } else {
+        setAlerts([]);
       }
     } catch (error: any) {
       console.error('获取告警信息失败:', error);
+      setAlerts([]); // 出错时设置为空数组
     }
   };
 
@@ -341,22 +358,22 @@ const SystemMonitor: React.FC = () => {
         {health && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '24px' }}>
             <Card>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>系统健康状态</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                {getStatusIcon(health.overall)}
-                <span style={{ 
-                  fontSize: '16px', 
-                  fontWeight: '600',
-                  ...getStatusColor(health.overall).split(' ').reduce((acc, className) => {
-                    if (className.includes('text-')) acc.color = className.replace('text-', '#');
-                    return acc;
-                  }, {} as any)
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>健康检查</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>整体状态</span>
+                <span style={{
+                  fontSize: '12px',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: health?.overall === 'healthy' ? '#dcfce7' : health?.overall === 'warning' ? '#fef3c7' : '#fef2f2',
+                  color: health?.overall === 'healthy' ? '#166534' : health?.overall === 'warning' ? '#92400e' : '#dc2626',
+                  fontWeight: '500'
                 }}>
-                  {health.overall === 'healthy' ? '健康' : health.overall === 'warning' ? '警告' : '严重'}
+                  {health?.overall === 'healthy' ? '健康' : health?.overall === 'warning' ? '警告' : '严重'}
                 </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {Object.entries(health.checks).map(([key, check]) => (
+                {health?.checks && Object.entries(health.checks).map(([key, check]) => (
                   <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {getStatusIcon(check.status)}
@@ -373,7 +390,7 @@ const SystemMonitor: React.FC = () => {
             <Card>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>服务状态</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {Object.entries(health.services).map(([service, status]) => (
+                {health?.services && Object.entries(health.services).map(([service, status]) => (
                   <div key={service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {status === 'running' ? (
@@ -399,10 +416,10 @@ const SystemMonitor: React.FC = () => {
               </div>
               <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
                 <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                  运行时间: {formatUptime(health.uptime)}
+                  运行时间: {health?.uptime ? formatUptime(health.uptime) : '未知'}
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                  最后检查: {new Date(health.timestamp).toLocaleString()}
+                  最后检查: {health?.timestamp ? new Date(health.timestamp).toLocaleString() : '未知'}
                 </p>
               </div>
             </Card>
